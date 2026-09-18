@@ -1,6 +1,7 @@
 # Status
 
 Active milestone: **Weekend 3** is next. Weekends 1 (toy agent) and 2 (world engine) are done.
+Plain-language view for Mithun of what each milestone is and why: `docs/JOURNEY.md` (keep in sync).
 
 | # | Milestone | State | Notes |
 | - | --- | --- | --- |
