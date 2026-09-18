@@ -7,5 +7,6 @@ build/
 .pytest_cache/
 .ruff_cache/
 .traces/
+.shop_state.json
 .env
 .DS_Store
