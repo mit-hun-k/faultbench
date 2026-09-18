@@ -1,10 +1,10 @@
-"""Refund-support agent for the shop demo (worldbench milestone 1).
+"""Refund-support agent for the shop demo.
 
-A Pydantic AI agent that talks to the throwaway `tools_dict.py` MCP server over stdio.
-It knows nothing about worldbench; it just sees three MCP tools. The whole point of
-milestone 1 is to watch a real model drive these naive tools and see where it goes wrong.
+A Pydantic AI agent that talks to a worldbench MCP server over stdio. As of milestone 3 the
+server is *generated from* `worlds/shop.yaml` (`python -m worldbench.server`), replacing the
+throwaway `tools_dict.py`. The agent itself is unchanged: it just sees three MCP tools.
 
-Model: set via WORLDBENCH_DEMO_MODEL (default `openai:gpt-4o-mini`); e.g.
+Model: set via WORLDBENCH_DEMO_MODEL (default `openai:gpt-5-mini`); e.g.
 `anthropic:claude-opus-5`. Needs the matching provider key in the env (see .env.example).
 Nothing in worldbench itself makes LLM calls — only this example does.
 """
@@ -19,6 +19,7 @@ from pydantic_ai import Agent
 from pydantic_ai.mcp import FastMCPClient, MCPToolset, StdioTransport
 
 MODEL = os.environ.get("WORLDBENCH_DEMO_MODEL", "openai:gpt-5-mini")
+DEFAULT_WORLD = str(Path(__file__).parent / "worlds" / "shop.yaml")
 
 SYSTEM_PROMPT = """\
 You are a refund-support agent for an online shop. You help customers return orders and
@@ -35,11 +36,13 @@ Policy:
 Be concise. Tell the customer what you did or why you could not help."""
 
 
-def build_toolset(server_path: str | None = None, state_file: str | None = None) -> MCPToolset:
-    """Spawn `tools_dict.py` as a stdio MCP subprocess and expose it as a toolset."""
-    server_path = server_path or str(Path(__file__).with_name("tools_dict.py"))
-    env = {"SHOP_STATE_FILE": state_file} if state_file else None
-    transport = StdioTransport(command=sys.executable, args=[server_path], env=env)
+def build_toolset(world_path: str | None = None, state_file: str | None = None) -> MCPToolset:
+    """Spawn a worldbench server for `world_path` as a stdio subprocess and expose it."""
+    world_path = world_path or DEFAULT_WORLD
+    env = {"WORLDBENCH_STATE_FILE": state_file} if state_file else None
+    transport = StdioTransport(
+        command=sys.executable, args=["-m", "worldbench.server", world_path], env=env
+    )
     return MCPToolset(FastMCPClient(transport))
 
 
@@ -47,9 +50,11 @@ def build_agent(toolset: MCPToolset) -> Agent:
     return Agent(MODEL, system_prompt=SYSTEM_PROMPT, toolsets=[toolset])
 
 
-async def run_agent(prompt: str, state_file: str | None = None) -> str:
+async def run_agent(
+    prompt: str, state_file: str | None = None, world_path: str | None = None
+) -> str:
     """Run one request end to end and return the agent's final text reply."""
-    toolset = build_toolset(state_file=state_file)
+    toolset = build_toolset(world_path=world_path, state_file=state_file)
     agent = build_agent(toolset)
     async with agent:
         result = await agent.run(prompt)

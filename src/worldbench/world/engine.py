@@ -20,7 +20,18 @@ from .seed import seed_table
 
 # World attributes a record type must not shadow (since tables are attribute-accessed).
 _RESERVED = frozenset(
-    {"spec", "name", "seed", "revision", "load", "snapshot", "diff", "table", "tables"}
+    {
+        "spec",
+        "name",
+        "seed",
+        "revision",
+        "load",
+        "snapshot",
+        "diff",
+        "table",
+        "tables",
+        "source_path",
+    }
 )
 
 
@@ -184,6 +195,7 @@ class World:
         self.name = spec.name
         self.seed = spec.seed
         self.revision = 0
+        self.source_path: Path | None = None  # set by load(); used to resolve custom handlers
         self._tables: dict[str, Table] = {}
         for service in spec.services.values():
             for rname, rtype in service.records.items():
@@ -195,8 +207,10 @@ class World:
 
     @classmethod
     def load(cls, path: str | Path) -> World:
-        data = yaml.safe_load(Path(path).read_text())
+        path = Path(path)
+        data = yaml.safe_load(path.read_text())
         world = cls(parse_world(data))
+        world.source_path = path
         world._seed()
         return world
 

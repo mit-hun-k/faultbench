@@ -22,12 +22,12 @@ Each piece: what it is, why we need it, and whether it's done.
 **Why:** Agents need somewhere safe to act. Real systems are dangerous to test on (real refunds). Hand-made fakes take weeks. This makes one from 40 lines of YAML.
 **Built:** 19 Sep. Loading the same file always gives byte-identical data, checked across separate runs. 36 tests.
 
-### 3. MCP server 🔨 now
+### 3. MCP server ✅
 **What:** The door into the fake world. Turns each operation (get order, issue refund) into a tool the agent can call, using MCP, the standard way agents talk to tools.
 **Why:** So *any* agent, built with any framework, can use the fake world with zero glue code. The toy agent from piece 1 should work unchanged when pointed at it.
-**Done when:** The toy agent completes a refund against the fake world instead of the hand-written dictionary.
+**Built:** 19 Sep. The shop's tools are now generated from the YAML file, not hand-written. The toy agent, unchanged, returned an order and refunded it against the generated world. The hand-written server from piece 1 is gone.
 
-### 4. Fault layer ⬜  ← the big demo
+### 4. Fault layer 🔨 now  ← the big demo
 **What:** Makes the world misbehave on purpose: slow replies, timeouts, errors, rate limits, and a fake clock you can move forward.
 **Why:** This is the whole point of the project. Agents fail in production when the world is slow or broken, and nobody can make a real payments API time out on command. Now you can.
 **Done when:** Set "10% of refund calls time out" and watch the toy agent refund a customer twice. Show someone that day.

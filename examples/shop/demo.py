@@ -1,13 +1,14 @@
-"""End-to-end refund demo (worldbench milestone 1).
+"""End-to-end refund demo.
 
-Runs the Pydantic AI agent against the throwaway dict-backed MCP server on a single
-request, then prints the final world state and the tool-call log so we can see what the
-agent actually did. This is a feel-the-problem script, not a test.
+Runs the Pydantic AI agent against a worldbench MCP server generated from
+`worlds/shop.yaml` (milestone 3), then prints the final world state and flags any problems.
+This is a feel-the-problem script, not a test.
 
-    uv run python examples/shop/demo.py                 # default: return order 3
-    uv run python examples/shop/demo.py "refund order 5"
+    uv run python examples/shop/demo.py                          # return a delivered order
+    uv run python examples/shop/demo.py "return order 5 for me"  # a specific order
 
-Needs ANTHROPIC_API_KEY (copy .env.example to .env and fill it in).
+Needs a provider key (copy .env.example to .env and fill it in). With gpt-5-mini and no
+faults, the agent behaves — the interesting failures show up once faults land (milestone 4).
 """
 
 from __future__ import annotations
@@ -19,9 +20,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-from agent import MODEL, run_agent
+from agent import DEFAULT_WORLD, MODEL, run_agent
 
-DEFAULT_PROMPT = "I want to return order 3 and get a refund."
+from worldbench.world import World
 
 # Which env key each provider prefix needs, so we can fail early with a clear message.
 PROVIDER_KEYS = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
@@ -41,15 +42,16 @@ def load_dotenv() -> None:
 
 
 def report(state_file: Path) -> None:
-    state = json.loads(state_file.read_text())
-    orders, refunds, calls = state["orders"], state["refunds"], state["calls"]
-
-    print("\n=== tool calls ===")
-    for i, call in enumerate(calls, 1):
-        print(f"{i:>2}. {call['tool']}({call['args']}) -> {call['result']}")
+    """Report from a world snapshot: {table: {id: row}} (written by the server)."""
+    if not state_file.exists():
+        print("\n(the agent made no tool calls, so there is no world state to show)")
+        return
+    snapshot = json.loads(state_file.read_text())
+    orders = list(snapshot.get("orders", {}).values())
+    refunds = list(snapshot.get("refunds", {}).values())
 
     print("\n=== final orders ===")
-    for order in orders.values():
+    for order in orders:
         print(f"  order {order['id']}: {order['status']:<9} ${order['total']:.2f}")
 
     print("\n=== refunds issued ===")
@@ -66,13 +68,13 @@ def report(state_file: Path) -> None:
     for order_id, n in per_order.items():
         if n > 1:
             problems.append(f"order {order_id} was refunded {n} times (double refund)")
+    by_id = {o["id"]: o for o in orders}
     for rf in refunds:
-        order = orders.get(rf["order_id"], {})
-        # An order eligible for refund must have ended up "returned"; anything else is a leak.
-        if order.get("status") != "returned":
+        status = by_id.get(rf["order_id"], {}).get("status")
+        # An order that got a refund should have ended up "returned"; anything else is a leak.
+        if status != "returned":
             problems.append(
-                f"order {rf['order_id']} was refunded but its status is "
-                f"{order.get('status', 'unknown')!r}, not 'returned'"
+                f"order {rf['order_id']} was refunded but its status is {status!r}, not 'returned'"
             )
     if not problems:
         print("  none detected in this run (try running it a few times)")
@@ -92,9 +94,17 @@ def main() -> int:
         )
         return 1
 
-    prompt = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PROMPT
+    # Pick a delivered order from the same (deterministic) world the server will build.
+    delivered = World.load(DEFAULT_WORLD).orders.pick(status="delivered")
+    prompt = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else f"I want to return order {delivered.id} and get a refund."
+    )
+
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
         state_file = Path(tmp.name)
+    state_file.unlink(missing_ok=True)  # server creates it on the first tool call
 
     print(f"prompt: {prompt!r}\n")
     reply = asyncio.run(run_agent(prompt, state_file=str(state_file)))
