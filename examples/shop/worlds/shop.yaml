@@ -1,11 +1,13 @@
-# Target shape for milestone 2+. Not loadable until world/schema.py exists.
+# Loadable as of milestone 2: World.load("examples/shop/worlds/shop.yaml").
+# Tables are reached by record-type name, so records are named as collections
+# (orders, refunds) and must be unique across the world.
 name: shop
 seed: 42
 
 services:
   orders:
     records:
-      order:
+      orders:
         id: str
         customer_id: str
         total: float
@@ -14,21 +16,21 @@ services:
     seed:
       count: 50
     operations:
-      get_order:   { kind: get,  record: order }
-      list_orders: { kind: list, record: order, filter: [customer_id] }
+      get_order:   { kind: get,  record: orders }
+      list_orders: { kind: list, record: orders, filter: [customer_id] }
       create_return:
         kind: custom
         handler: shop_rules.create_return
 
   payments:
     records:
-      refund:
+      refunds:
         id: str
-        order_id: ref[orders.order]
+        order_id: ref[orders.orders]
         amount: float
         created_at: datetime
     operations:
-      issue_refund: { kind: create, record: refund }
+      issue_refund: { kind: create, record: refunds }
 
 faults:
   default:

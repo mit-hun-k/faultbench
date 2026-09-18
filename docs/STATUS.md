@@ -1,13 +1,13 @@
 # Status
 
-Active milestone: **Weekend 2** is next. Weekend 1 (toy refund agent + naive dict server) is done.
+Active milestone: **Weekend 3** is next. Weekends 1 (toy agent) and 2 (world engine) are done.
 
 | # | Milestone | State | Notes |
 | - | --- | --- | --- |
 | 0 | Scaffold: layout, pyproject, CLAUDE.md, docs, empty tests | done | 2026-09-19 |
 | 1 | Toy refund agent (Pydantic AI) + 3 hand-written MCP tools over a dict | done | 2026-09-19; proves the problem from the agent side |
-| 2 | world/: schema, engine, seed; unit tests | next | `World.load("shop.yaml").orders.all()` is deterministic |
-| 3 | server/: generate get/list/create tools from YAML; stdio | todo | toy agent works unchanged against generated server |
+| 2 | world/: schema, engine, seed; unit tests | done | 2026-09-19; `World.load(...).orders.all()` byte-identical, verified cross-process |
+| 3 | server/: generate get/list/create tools from YAML; stdio | next | toy agent works unchanged against generated server |
 | 4 | faults/: injector + clock; wire into server | todo | reproduce the double-refund bug. DEMO POINT |
 | 5 | pytest_plugin: world/faults/mcp_url fixtures, markers | todo | first green test |
 | 6 | --runs=N pass rate; trace recorder + fixture | todo | "17/20 passed" output |
@@ -19,13 +19,16 @@ Active milestone: **Weekend 2** is next. Weekend 1 (toy refund agent + naive dic
 | 12 | triage, roadmap (v0.2 replay, v0.3 scenario format) | todo | |
 
 ## Next session should
-Weekend 2. Build `src/worldbench/world/`: `schema.py` (pydantic models for World/Service/
-RecordType/Field/Operation/SeedSpec per ARCHITECTURE §1), `engine.py` (`World.load(path)`,
-`Table` with get/all/where/pick/insert/update/delete, `World.snapshot/diff/revision`), and
-`seed.py` (faker generators per field type, seeded by `world.seed`; CSV/JSON loaders).
-Target: `World.load("examples/shop/worlds/shop.yaml").orders.all()` is deterministic — same
-YAML + same seed => byte-identical initial state. Write unit tests in `tests/`. Do not build
-the server yet (that's weekend 3). `shop.yaml` already has the target schema shape to load.
+Weekend 3. Build `src/worldbench/server/`: `mcp_server.py` (build an `mcp` 2.x `MCPServer`
+from a World, one tool per operation, JSON schema derived from the record type; stdio
+transport) and `operations.py` (built-in kinds get/list/create/update/delete; `custom`
+resolves `handler: "module.func"` and calls `func(world, clock, **args)`). Goal: the toy
+agent (`examples/shop/agent.py`) works UNCHANGED against a server generated from
+`shop.yaml`, replacing `tools_dict.py`. Note: `create_return`'s handler expects a
+`clock` and treats `placed_at` as a datetime, but seed writes ISO strings and there is no
+clock until weekend 4 — for weekend 3 pass a real-`datetime.now` shim or defer the window
+check; don't pull weekend-4 work forward. Tighten `pyproject` `mcp>=1.2` to `>=2` (API
+moved to `mcp.server.mcpserver.MCPServer`). Do not build faults yet.
 
 ## Blocked / open
 - Live demo ran (gpt-5-mini, OpenAI key): happy path correct, and it correctly refuses the
