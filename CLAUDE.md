@@ -34,7 +34,8 @@ Target: under 3,000 lines for v0.1.
 4. Write tests alongside code in `tests/`.
 5. Before ending: run `uv run pytest` and `uv run ruff check .`, update STATUS.md
    (state + "next session should"), append to DECISIONS.md if anything was decided,
-   commit.
+   and update docs/JOURNEY.md: flip the finished milestone to ✅ with a 2-line plain-language
+   "Built." note (what exists now, not how), move the "Now" marker to the next one. Commit.
 
 ## Layout
     src/worldbench/world/    schema.py engine.py seed.py       # YAML -> stateful tables
