@@ -1,0 +1,16 @@
+# A tiny world with only built-in operations (no custom handler), for testing the plugin.
+name: mini
+seed: 7
+
+services:
+  store:
+    records:
+      widgets:
+        id: str
+        name: str
+        status: enum[new, sold]
+    seed:
+      count: 5
+    operations:
+      get_widget:  { kind: get,    record: widgets }
+      sell_widget: { kind: update, record: widgets }

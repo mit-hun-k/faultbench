@@ -32,12 +32,12 @@ Each piece: what it is, why we need it, and whether it's done.
 **Why:** This is the whole point of the project. Agents fail in production when the world is slow or broken, and nobody can make a real payments API time out on command. Now you can.
 **Built:** 19 Sep. With faults on, `issue_refund` times out 10% of the time — after the refund already went through. Run live, the agent saw the timeout, retried, and **refunded the customer twice**. The exact production bug, reproduced on demand and flagged automatically.
 
-### 5. pytest plugin 🔨 now
+### 5. pytest plugin ✅
 **What:** Lets a developer use all of the above as a normal test: "run my agent against this world with these faults, then check what happened."
 **Why:** Testing tools that live outside a developer's normal workflow get ignored. Inside pytest, it's just one more test file.
-**Done when:** The refund test passes against a fault-free world.
+**Built:** 19 Sep. A test tags itself with `@pytest.mark.world("shop.yaml")` and asks for `world` and `mcp_server`; the plugin builds them and cleans up. The real refund test now reads like an ordinary pytest test and passes green against a fault-free world.
 
-### 6. Pass rate and trace ⬜
+### 6. Pass rate and trace 🔨 now
 **What:** Run a test 20 times and report a pass rate, plus a recording of every tool call so a failure shows *why*.
 **Why:** Agents are random; a single pass/fail lies. The line "17/20 passed, 3 duplicate refunds after a timeout" *is* the product. Everything before this exists to make that line possible.
 **Done when:** That line prints, and each failure has a readable trace.

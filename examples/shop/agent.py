@@ -41,8 +41,15 @@ def build_toolset(
     state_file: str | None = None,
     faults: bool = False,
     run_index: int = 0,
+    server: object | None = None,
 ) -> MCPToolset:
-    """Spawn a worldbench server for `world_path` as a stdio subprocess and expose it."""
+    """Expose a worldbench server as a Pydantic AI toolset.
+
+    If `server` (an in-process MCPServer, e.g. from the pytest `mcp_server` fixture) is given,
+    connect to it in memory. Otherwise spawn `python -m worldbench.server` as a subprocess.
+    """
+    if server is not None:
+        return MCPToolset(FastMCPClient(server))
     world_path = world_path or DEFAULT_WORLD
     env: dict[str, str] = {}
     if state_file:
@@ -68,10 +75,15 @@ async def run_agent(
     world_path: str | None = None,
     faults: bool = False,
     run_index: int = 0,
+    server: object | None = None,
 ) -> str:
     """Run one request end to end and return the agent's final text reply."""
     toolset = build_toolset(
-        world_path=world_path, state_file=state_file, faults=faults, run_index=run_index
+        world_path=world_path,
+        state_file=state_file,
+        faults=faults,
+        run_index=run_index,
+        server=server,
     )
     agent = build_agent(toolset)
     async with agent:

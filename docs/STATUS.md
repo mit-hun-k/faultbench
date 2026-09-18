@@ -1,6 +1,6 @@
 # Status
 
-Active milestone: **Weekend 5** is next. Weekends 1–4 (toy agent, world engine, MCP server, faults) are done.
+Active milestone: **Weekend 6** is next. Weekends 1–5 (toy agent, world engine, MCP server, faults, pytest plugin) are done.
 Plain-language view for Mithun of what each milestone is and why: `docs/JOURNEY.md` (keep in sync).
 
 | # | Milestone | State | Notes |
@@ -10,8 +10,8 @@ Plain-language view for Mithun of what each milestone is and why: `docs/JOURNEY.
 | 2 | world/: schema, engine, seed; unit tests | done | 2026-09-19; `World.load(...).orders.all()` byte-identical, verified cross-process |
 | 3 | server/: generate get/list/create tools from YAML; stdio | done | 2026-09-19; toy agent completed a refund against the generated server (gpt-5-mini) |
 | 4 | faults/: injector + clock; wire into server | done | 2026-09-19; live agent double-refunded order 2 under a 10% timeout |
-| 5 | pytest_plugin: world/faults/mcp_url fixtures, markers | next | first green test |
-| 6 | --runs=N pass rate; trace recorder + fixture | todo | "17/20 passed" output |
+| 5 | pytest_plugin: world/faults/mcp_url fixtures, markers | done | 2026-09-19; first green refund test passes via fixtures/markers |
+| 6 | --runs=N pass rate; trace recorder + fixture | next | "17/20 passed" output |
 | 7 | custom ops, enum/datetime, conditional faults, rate limits | todo | sync-lag + eligibility tests |
 | 8 | HTTP transport; `worldbench serve`; second framework | todo | framework-neutral proven |
 | 9 | hardening, docs, second example world | todo | a stranger can write a world file |
@@ -20,27 +20,36 @@ Plain-language view for Mithun of what each milestone is and why: `docs/JOURNEY.
 | 12 | triage, roadmap (v0.2 replay, v0.3 scenario format) | todo | |
 
 ## Next session should
-Weekend 5 — build `src/worldbench/pytest_plugin.py`: fixtures `world`, `faults`, `clock`,
-`mcp_url` (server subprocess per test), and markers `@pytest.mark.world("path.yaml")`,
-`@pytest.mark.faults("path" | dict)`, `@pytest.mark.runs(N)`, `@pytest.mark.min_pass_rate`.
-Goal (JOURNEY): a first green refund test against a fault-free world. `--runs=N` / pass-rate
-reporting is weekend 6, so keep this to fixtures + markers + one green test.
+Weekend 6 — pass rate + trace. Two parts:
+1. `src/worldbench/trace/`: `recorder.py` (JSON Lines, one event per tool call:
+   `{run, seq, ts, tool, args, fault, latency_ms, ok, result|error, world_rev}`) and
+   `queries.py` (`Trace.count(tool)`, `calls_to(tool)`, `faults()`, `failures()`). Wire the
+   recorder into `build_server`/the injector: the injector already takes an `on_event` hook,
+   and `_record` in mcp_server.py is the success path — feed both into the recorder.
+2. Plugin: honour `@pytest.mark.runs(N)` / `--runs=N` by running a test N times with
+   `run_index = 0..N-1` (distinct deterministic fault sequences), report
+   `runs / passed / failed / pass rate` and a per-failure trace summary, and turn
+   `@pytest.mark.min_pass_rate(r)` into an overall pass/fail. Add a `trace` fixture.
+Goal (JOURNEY): print "17/20 passed, 3 duplicate refunds after a timeout" with a readable
+trace per failure.
 
-Handoff notes from weekend 4:
-- `build_server(world, clock=None, state_file=None, faults=None, run_index=0)` exists and is
-  wired; the `mcp_url` fixture can spawn `python -m worldbench.server <world> [--faults]`
-  (env: WORLDBENCH_STATE_FILE, WORLDBENCH_FAULTS=1, WORLDBENCH_RUN_INDEX). But `mcp_url`
-  implies HTTP (a URL); stdio is a subprocess with no URL. Decide: expose an HTTP transport
-  now (ARCHITECTURE §3 lists streamable HTTP; `MCPServer.run("streamable-http")` exists), or
-  make the fixture hand back a stdio transport/connected toolset instead of a URL. HTTP is
-  formally weekend 8 — leaning toward a stdio-based fixture for weekend 5, revisit naming.
-- The `world` fixture must be the SAME world the server mutates so tests can assert on it.
-  With a subprocess that's two processes; either run the server in-process (build_server +
-  in-memory client, as the tests already do) and share the World object, or read the
-  server's state file. In-process/in-memory is simplest for a first green test.
-- Clock/seed-window consistency is still deferred to weekend 7 (conditional faults +
-  eligibility). FakeClock is built and unit-tested; nothing enforces the window yet.
-- Trace recorder is weekend 6; the injector already takes an `on_event` hook to feed it.
+Handoff notes from weekend 5:
+- Fixtures live in `pytest_plugin.py`: `world`, `faults` (empty unless `@pytest.mark.faults`),
+  `clock` (a standalone FakeClock), `mcp_server` (in-process server sharing the `world`
+  object). No HTTP/`mcp_url` yet — that's weekend 8. The example agent connects to the
+  in-memory server via `run_agent(..., server=mcp_server)` (agent.build_toolset grew a
+  `server=` arg).
+- IMPORTANT: `mcp_server` builds with `clock=None` on purpose. Threading the `clock` fixture
+  in activates `create_return`'s 30-day window, and the seed dates (2020–2025) fall outside
+  30 days of the default clock (2025-06-01), so the agent correctly refuses and the refund
+  test fails. Aligning seed dates with the clock (or setting the clock into the seed window)
+  is the weekend-7 eligibility work; do it before threading the clock into the server.
+- Two test locations: `uv run pytest` runs `tests/` (no key; includes `tests/test_plugin.py`
+  driving fixtures via `tests/worlds/mini.yaml`). `uv run pytest examples/shop` runs the real
+  agent test `examples/shop/test_refunds.py` (skips without a model key; `conftest.py` loads
+  `.env`). For `--runs=N` demoing the double refund, target the example test with a faults
+  marker once weekend 6 lands.
+- The `runs`/`min_pass_rate` markers are registered but not yet enforced.
 
 ## Blocked / open
 - Live demo ran (gpt-5-mini, OpenAI key): happy path correct, and it correctly refuses the
