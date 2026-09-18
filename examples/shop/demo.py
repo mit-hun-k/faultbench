@@ -19,9 +19,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-from agent import run_agent
+from agent import MODEL, run_agent
 
 DEFAULT_PROMPT = "I want to return order 3 and get a refund."
+
+# Which env key each provider prefix needs, so we can fail early with a clear message.
+PROVIDER_KEYS = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
 
 
 def load_dotenv() -> None:
@@ -78,9 +81,15 @@ def report(state_file: Path) -> None:
 
 
 def main() -> int:
+    os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")  # keep demo output clean
     load_dotenv()
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and fill it in.")
+    provider = MODEL.split(":", 1)[0]
+    key = PROVIDER_KEYS.get(provider)
+    if key and not os.environ.get(key):
+        print(
+            f"{key} is not set (needed for model {MODEL!r}). Add it to .env, or set "
+            f"WORLDBENCH_DEMO_MODEL to a provider you have a key for."
+        )
         return 1
 
     prompt = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_PROMPT

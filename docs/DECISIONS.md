@@ -14,4 +14,4 @@ One line each. Append; do not rewrite history. Format: date, decision, reason.
 - 2026-09-19 — Time is read only from `FakeClock`. Reason: "order is 2 hours old" must be testable without waiting.
 - 2026-09-19 — Installed `mcp` is 2.x (2.2.0): `FastMCP` is now `mcp.server.mcpserver.MCPServer` (`@server.tool()`, `server.run("stdio"|"streamable-http")`). Weekend 3 targets this API; `pyproject` `mcp>=1.2` should be tightened to `>=2` before the server milestone.
 - 2026-09-19 — Pydantic AI is 2.x (2.45): MCP client is `MCPToolset(FastMCPClient(StdioTransport(...)))`, not `MCPServerStdio`. Agent connects via `async with agent:`.
-- 2026-09-19 — Example agent model: `anthropic:claude-opus-5` (user choice for weekend 1). Swappable via `MODEL` in `examples/shop/agent.py`.
+- 2026-09-19 — Example agent model is set via `WORLDBENCH_DEMO_MODEL` (default `openai:gpt-5-mini`; the key on hand this session was OpenAI). Provider prefix picks the required key. Reason: keep the example key-agnostic rather than pinning one provider.

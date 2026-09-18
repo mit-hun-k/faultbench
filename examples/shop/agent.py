@@ -4,19 +4,21 @@ A Pydantic AI agent that talks to the throwaway `tools_dict.py` MCP server over 
 It knows nothing about worldbench; it just sees three MCP tools. The whole point of
 milestone 1 is to watch a real model drive these naive tools and see where it goes wrong.
 
-Model: Claude Opus 5 (`anthropic:claude-opus-5`). Needs ANTHROPIC_API_KEY in the env
-(see .env.example). Nothing in worldbench itself makes LLM calls — only this example does.
+Model: set via WORLDBENCH_DEMO_MODEL (default `openai:gpt-4o-mini`); e.g.
+`anthropic:claude-opus-5`. Needs the matching provider key in the env (see .env.example).
+Nothing in worldbench itself makes LLM calls — only this example does.
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 from pydantic_ai import Agent
 from pydantic_ai.mcp import FastMCPClient, MCPToolset, StdioTransport
 
-MODEL = "anthropic:claude-opus-5"
+MODEL = os.environ.get("WORLDBENCH_DEMO_MODEL", "openai:gpt-5-mini")
 
 SYSTEM_PROMPT = """\
 You are a refund-support agent for an online shop. You help customers return orders and

@@ -28,7 +28,7 @@ YAML + same seed => byte-identical initial state. Write unit tests in `tests/`. 
 the server yet (that's weekend 3). `shop.yaml` already has the target schema shape to load.
 
 ## Blocked / open
-- Live model demo (`examples/shop/demo.py`) was NOT run this session: no ANTHROPIC_API_KEY
-  in the env. Plumbing was verified keyless (server subprocess, tool schemas, state file,
-  and the double-refund failure all confirmed). Run `demo.py` once with a key to watch how
-  Opus 5 handles it — worth a look before the engine hides these tools behind YAML.
+- Live demo ran (gpt-5-mini, OpenAI key): happy path correct, and it correctly refuses the
+  already-returned order 5. Finding: naive tools alone don't reliably break a competent
+  agent — the double refund needs a forced retry (timeout), which is milestone 4's job.
+  This raises the bar for the demo test: it's only meaningful once faults exist.
