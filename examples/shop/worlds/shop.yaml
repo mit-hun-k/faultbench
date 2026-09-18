@@ -1,0 +1,40 @@
+# Target shape for milestone 2+. Not loadable until world/schema.py exists.
+name: shop
+seed: 42
+
+services:
+  orders:
+    records:
+      order:
+        id: str
+        customer_id: str
+        total: float
+        status: enum[placed, shipped, delivered, returned]
+        placed_at: datetime
+    seed:
+      count: 50
+    operations:
+      get_order:   { kind: get,  record: order }
+      list_orders: { kind: list, record: order, filter: [customer_id] }
+      create_return:
+        kind: custom
+        handler: shop_rules.create_return
+
+  payments:
+    records:
+      refund:
+        id: str
+        order_id: ref[orders.order]
+        amount: float
+        created_at: datetime
+    operations:
+      issue_refund: { kind: create, record: refund }
+
+faults:
+  default:
+    latency_ms: [50, 200]
+  payments.issue_refund:
+    latency_ms: [200, 3000]
+    errors: { timeout: 0.10, http_500: 0.02 }
+  orders.get_order:
+    errors: { not_found_if_newer_than: 2h }
