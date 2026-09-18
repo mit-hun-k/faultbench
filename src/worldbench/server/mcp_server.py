@@ -1,12 +1,14 @@
-"""Build an MCP server from a World. Milestone 3.
+"""Build an MCP server from a World. Milestones 3–4.
 
 `build_server(world)` registers one MCP tool per declared operation. Each tool's input
 schema is derived from the record type (or, for `custom`, from the handler's signature) by
 giving a wrapper function an explicit `__signature__`, which the mcp SDK turns into a JSON
 schema. Tools return the world's own dicts/lists.
 
-There is no clock yet (milestone 4). Custom handlers are called as `handler(world, clock,
-**args)` with `clock=None`; a handler must tolerate that (see examples/shop/shop_rules.py).
+If `faults` is given, every call goes through a seeded Injector (latency + errors). A
+`timeout` fault runs the op and then fails, so a retrying client double-writes; the injected
+error is surfaced as a ToolError. Custom handlers are called as `handler(world, clock,
+**args)`; `clock` is None unless one is passed (the return-window check stays off until then).
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
+from ..faults import FaultError, FaultProfile, FaultTimeout, Injector
 from ..world import OperationSpec, World
 from .operations import resolve_handler, run_builtin
 
@@ -40,13 +43,27 @@ _PYTYPE: dict[str, type] = {
 _EMPTY = inspect.Parameter.empty
 
 
-def build_server(world: World, clock: Any = None, state_file: str | None = None) -> MCPServer:
-    """Create an MCPServer exposing one tool per operation in `world`."""
+def build_server(
+    world: World,
+    clock: Any = None,
+    state_file: str | None = None,
+    faults: FaultProfile | None = None,
+    run_index: int = 0,
+) -> MCPServer:
+    """Create an MCPServer exposing one tool per operation in `world`.
+
+    If `faults` is given, every tool call goes through a seeded Injector (latency + errors).
+    """
     _ensure_handler_path(world)
+    injector = (
+        Injector(faults, seed=world.seed, run_index=run_index, clock=clock)
+        if faults and not faults.is_empty()
+        else None
+    )
     server = MCPServer(world.name, instructions=f"Generated tools for the {world.name} world.")
     for service in world.spec.services.values():
         for op in service.operations.values():
-            fn = _make_tool_fn(world, clock, op, state_file)
+            fn = _make_tool_fn(world, clock, service.name, op, state_file, injector)
             server.add_tool(
                 fn,
                 name=op.name,
@@ -56,10 +73,18 @@ def build_server(world: World, clock: Any = None, state_file: str | None = None)
     return server
 
 
-def serve_stdio(world_path: str | Path, clock: Any = None, state_file: str | None = None) -> None:
+def serve_stdio(
+    world_path: str | Path,
+    clock: Any = None,
+    state_file: str | None = None,
+    faults: FaultProfile | None = None,
+    run_index: int = 0,
+) -> None:
     """Load a world file and serve it over stdio (blocking)."""
     world = World.load(world_path)
-    build_server(world, clock=clock, state_file=state_file).run("stdio")
+    build_server(world, clock=clock, state_file=state_file, faults=faults, run_index=run_index).run(
+        "stdio"
+    )
 
 
 # --- internals ------------------------------------------------------------------
@@ -120,18 +145,37 @@ def _params_for(world: World, op: OperationSpec, clock: Any) -> list[inspect.Par
     raise ValueError(f"unsupported operation kind {op.kind!r}")
 
 
-def _make_tool_fn(world: World, clock: Any, op: OperationSpec, state_file: str | None):
+def _make_tool_fn(
+    world: World,
+    clock: Any,
+    service_name: str,
+    op: OperationSpec,
+    state_file: str | None,
+    injector: Injector | None,
+):
     params = _params_for(world, op, clock)
     handler = resolve_handler(op.handler) if op.kind == "custom" else None
 
-    def call(kwargs: dict[str, Any]) -> Any:
+    def do(kwargs: dict[str, Any]) -> Any:
         try:
             if op.kind == "custom":
-                result = handler(world, clock, **kwargs)
-            else:
-                result = run_builtin(op.kind, world, op.record, dict(kwargs))
+                return handler(world, clock, **kwargs)
+            return run_builtin(op.kind, world, op.record, dict(kwargs))
         except _BUSINESS_ERRORS as exc:
             raise ToolError(str(exc)) from exc
+
+    def call(kwargs: dict[str, Any]) -> Any:
+        if injector is None:
+            result = do(kwargs)
+        else:
+            try:
+                result = injector.call(service_name, op.name, lambda: do(kwargs))
+            except FaultTimeout as exc:
+                # The op already ran; the client "timed out". Surface as a tool error so a
+                # retrying agent runs it again (the double-write bug).
+                raise ToolError(f"timeout: {exc}") from exc
+            except FaultError as exc:
+                raise ToolError(f"{exc.kind}: {exc}") from exc
         _record(op.name, kwargs, result, world, state_file)
         return result
 

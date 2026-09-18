@@ -27,12 +27,12 @@ Each piece: what it is, why we need it, and whether it's done.
 **Why:** So *any* agent, built with any framework, can use the fake world with zero glue code. The toy agent from piece 1 should work unchanged when pointed at it.
 **Built:** 19 Sep. The shop's tools are now generated from the YAML file, not hand-written. The toy agent, unchanged, returned an order and refunded it against the generated world. The hand-written server from piece 1 is gone.
 
-### 4. Fault layer 🔨 now  ← the big demo
-**What:** Makes the world misbehave on purpose: slow replies, timeouts, errors, rate limits, and a fake clock you can move forward.
+### 4. Fault layer ✅  ← the big demo
+**What:** Makes the world misbehave on purpose: slow replies, timeouts, errors, and a fake clock you can move forward. (Rate limits and conditional faults come with piece 7.)
 **Why:** This is the whole point of the project. Agents fail in production when the world is slow or broken, and nobody can make a real payments API time out on command. Now you can.
-**Done when:** Set "10% of refund calls time out" and watch the toy agent refund a customer twice. Show someone that day.
+**Built:** 19 Sep. With faults on, `issue_refund` times out 10% of the time — after the refund already went through. Run live, the agent saw the timeout, retried, and **refunded the customer twice**. The exact production bug, reproduced on demand and flagged automatically.
 
-### 5. pytest plugin ⬜
+### 5. pytest plugin 🔨 now
 **What:** Lets a developer use all of the above as a normal test: "run my agent against this world with these faults, then check what happened."
 **Why:** Testing tools that live outside a developer's normal workflow get ignored. Inside pytest, it's just one more test file.
 **Done when:** The refund test passes against a fault-free world.

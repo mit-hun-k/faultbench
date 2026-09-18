@@ -36,12 +36,24 @@ Policy:
 Be concise. Tell the customer what you did or why you could not help."""
 
 
-def build_toolset(world_path: str | None = None, state_file: str | None = None) -> MCPToolset:
+def build_toolset(
+    world_path: str | None = None,
+    state_file: str | None = None,
+    faults: bool = False,
+    run_index: int = 0,
+) -> MCPToolset:
     """Spawn a worldbench server for `world_path` as a stdio subprocess and expose it."""
     world_path = world_path or DEFAULT_WORLD
-    env = {"WORLDBENCH_STATE_FILE": state_file} if state_file else None
+    env: dict[str, str] = {}
+    if state_file:
+        env["WORLDBENCH_STATE_FILE"] = state_file
+    if faults:
+        env["WORLDBENCH_FAULTS"] = "1"
+        env["WORLDBENCH_RUN_INDEX"] = str(run_index)
     transport = StdioTransport(
-        command=sys.executable, args=["-m", "worldbench.server", world_path], env=env
+        command=sys.executable,
+        args=["-m", "worldbench.server", world_path],
+        env=env or None,
     )
     return MCPToolset(FastMCPClient(transport))
 
@@ -51,10 +63,16 @@ def build_agent(toolset: MCPToolset) -> Agent:
 
 
 async def run_agent(
-    prompt: str, state_file: str | None = None, world_path: str | None = None
+    prompt: str,
+    state_file: str | None = None,
+    world_path: str | None = None,
+    faults: bool = False,
+    run_index: int = 0,
 ) -> str:
     """Run one request end to end and return the agent's final text reply."""
-    toolset = build_toolset(world_path=world_path, state_file=state_file)
+    toolset = build_toolset(
+        world_path=world_path, state_file=state_file, faults=faults, run_index=run_index
+    )
     agent = build_agent(toolset)
     async with agent:
         result = await agent.run(prompt)

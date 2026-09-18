@@ -37,10 +37,26 @@ one `issue_refund`, and asked to refund an already-returned order it *correctly 
 
 That's the real lesson: **the interesting failures don't reproduce on demand until you
 perturb the world.** The double refund needs a *timeout on `issue_refund` that makes the
-agent retry*; eligibility bugs need clock skew or stale reads. That is milestone 4's fault
-layer. worldbench then needs (1) a world whose end state the test reads, (2) faults to
-*force* the retry/skew, and (3) a trace to assert the tool ran exactly once — over N seeded
-runs, because one clean pass proves nothing.
+agent retry* — which is exactly what the fault layer does.
+
+## Faults: the double refund (milestone 4)
+
+`shop.yaml` has a `faults:` block that makes `issue_refund` time out 10% of the time. A
+`timeout` fires *after* the refund is written but before the client hears back — so a
+retrying agent issues a second refund. Turn it on:
+
+```bash
+uv run python examples/shop/demo.py --faults
+WORLDBENCH_RUN_INDEX=4 uv run python examples/shop/demo.py --faults   # a run that triggers it
+```
+
+Faults are deterministic: same seed + `WORLDBENCH_RUN_INDEX` ⇒ same fault sequence, so a
+failure reproduces exactly. Seen live at run_index 4: the agent refunded order 2 twice, and
+the demo flagged `order 2 was refunded 2 times (double refund)`.
+
+Still to come: (1) run this as a pytest with the world/faults fixtures (milestone 5), (2) a
+trace to assert `issue_refund` ran exactly once, over N seeded runs (milestone 6) — because
+one clean pass proves nothing.
 
 Target test (see docs/ARCHITECTURE.md §5):
 

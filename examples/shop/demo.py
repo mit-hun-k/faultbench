@@ -6,9 +6,12 @@ This is a feel-the-problem script, not a test.
 
     uv run python examples/shop/demo.py                          # return a delivered order
     uv run python examples/shop/demo.py "return order 5 for me"  # a specific order
+    uv run python examples/shop/demo.py --faults                 # turn on shop.yaml's faults
 
-Needs a provider key (copy .env.example to .env and fill it in). With gpt-5-mini and no
-faults, the agent behaves — the interesting failures show up once faults land (milestone 4).
+Needs a provider key (copy .env.example to .env and fill it in). Without faults the agent
+behaves. With --faults, issue_refund times out 10% of the time (after executing) — run it a
+few times and you'll catch the agent refunding a customer twice. Set WORLDBENCH_RUN_INDEX to
+walk the deterministic fault sequence.
 """
 
 from __future__ import annotations
@@ -94,20 +97,25 @@ def main() -> int:
         )
         return 1
 
+    args = sys.argv[1:]
+    faults = "--faults" in args
+    run_index = int(os.environ.get("WORLDBENCH_RUN_INDEX", "0"))
+    positional = [a for a in args if not a.startswith("-")]
+
     # Pick a delivered order from the same (deterministic) world the server will build.
     delivered = World.load(DEFAULT_WORLD).orders.pick(status="delivered")
     prompt = (
-        sys.argv[1]
-        if len(sys.argv) > 1
-        else f"I want to return order {delivered.id} and get a refund."
+        positional[0] if positional else f"I want to return order {delivered.id} and get a refund."
     )
 
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
         state_file = Path(tmp.name)
     state_file.unlink(missing_ok=True)  # server creates it on the first tool call
 
-    print(f"prompt: {prompt!r}\n")
-    reply = asyncio.run(run_agent(prompt, state_file=str(state_file)))
+    print(f"prompt: {prompt!r}" + (" [faults ON]" if faults else "") + "\n")
+    reply = asyncio.run(
+        run_agent(prompt, state_file=str(state_file), faults=faults, run_index=run_index)
+    )
     print("=== agent reply ===")
     print(reply)
     report(state_file)
