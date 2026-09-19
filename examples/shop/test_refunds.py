@@ -25,3 +25,15 @@ async def test_refund_issued_exactly_once(world, mcp_server):
     await run_agent(f"I want to return order {order.id} and get a refund", server=mcp_server)
     assert world.orders.get(order.id).status == "returned"
     assert len(world.refunds.where(order_id=order.id)) == 1
+
+
+@pytest.mark.world("worlds/shop.yaml")
+@pytest.mark.faults({"payments.issue_refund": {"errors": {"timeout": 0.2}}})
+@pytest.mark.runs(8)
+@pytest.mark.min_pass_rate(0.5)
+async def test_refund_survives_timeouts(world, mcp_server):
+    """Under a 20% refund timeout, the correct outcome is still exactly one refund. A timeout
+    that makes the agent retry breaks this — the pass rate over 8 runs shows how often."""
+    order = world.orders.pick(status="delivered")
+    await run_agent(f"I want to return order {order.id} and get a refund", server=mcp_server)
+    assert len(world.refunds.where(order_id=order.id)) == 1

@@ -23,6 +23,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
 from ..faults import FaultError, FaultProfile, FaultTimeout, Injector
+from ..trace import Recorder
 from ..world import OperationSpec, World
 from .operations import resolve_handler, run_builtin
 
@@ -49,10 +50,12 @@ def build_server(
     state_file: str | None = None,
     faults: FaultProfile | None = None,
     run_index: int = 0,
+    recorder: Recorder | None = None,
 ) -> MCPServer:
     """Create an MCPServer exposing one tool per operation in `world`.
 
     If `faults` is given, every tool call goes through a seeded Injector (latency + errors).
+    If `recorder` is given, every call is recorded to the trace.
     """
     _ensure_handler_path(world)
     injector = (
@@ -63,7 +66,7 @@ def build_server(
     server = MCPServer(world.name, instructions=f"Generated tools for the {world.name} world.")
     for service in world.spec.services.values():
         for op in service.operations.values():
-            fn = _make_tool_fn(world, clock, service.name, op, state_file, injector)
+            fn = _make_tool_fn(world, clock, service.name, op, state_file, injector, recorder)
             server.add_tool(
                 fn,
                 name=op.name,
@@ -152,6 +155,7 @@ def _make_tool_fn(
     op: OperationSpec,
     state_file: str | None,
     injector: Injector | None,
+    recorder: Recorder | None,
 ):
     params = _params_for(world, op, clock)
     handler = resolve_handler(op.handler) if op.kind == "custom" else None
@@ -165,17 +169,30 @@ def _make_tool_fn(
             raise ToolError(str(exc)) from exc
 
     def call(kwargs: dict[str, Any]) -> Any:
-        if injector is None:
-            result = do(kwargs)
-        else:
-            try:
-                result = injector.call(service_name, op.name, lambda: do(kwargs))
-            except FaultTimeout as exc:
-                # The op already ran; the client "timed out". Surface as a tool error so a
-                # retrying agent runs it again (the double-write bug).
-                raise ToolError(f"timeout: {exc}") from exc
-            except FaultError as exc:
-                raise ToolError(f"{exc.kind}: {exc}") from exc
+        decision = {"fault": None, "latency_ms": 0.0}
+
+        def on_decision(fault: str | None, latency_ms: float) -> None:
+            decision["fault"] = fault
+            decision["latency_ms"] = latency_ms
+
+        try:
+            if injector is None:
+                result = do(kwargs)
+            else:
+                try:
+                    result = injector.call(
+                        service_name, op.name, lambda: do(kwargs), on_decision=on_decision
+                    )
+                except FaultTimeout as exc:
+                    # The op already ran; the client "timed out". Surface as a tool error so
+                    # a retrying agent runs it again (the double-write bug).
+                    raise ToolError(f"timeout: {exc}") from exc
+                except FaultError as exc:
+                    raise ToolError(f"{exc.kind}: {exc}") from exc
+        except ToolError as exc:
+            _record_trace(recorder, op.name, kwargs, decision, world, ok=False, error=str(exc))
+            raise
+        _record_trace(recorder, op.name, kwargs, decision, world, ok=True, result=result)
         _record(op.name, kwargs, result, world, state_file)
         return result
 
@@ -196,3 +213,28 @@ def _record(
     print(f"[worldbench] {tool}({args}) -> {result}", file=sys.stderr)
     if state_file:
         Path(state_file).write_text(json.dumps(world.snapshot(), indent=2))
+
+
+def _record_trace(
+    recorder: Recorder | None,
+    tool: str,
+    args: dict[str, Any],
+    decision: dict[str, Any],
+    world: World,
+    *,
+    ok: bool,
+    result: Any = None,
+    error: str | None = None,
+) -> None:
+    if recorder is None:
+        return
+    recorder.record(
+        tool=tool,
+        args=args,
+        ok=ok,
+        world_rev=world.revision,
+        fault=decision["fault"],
+        latency_ms=decision["latency_ms"],
+        result=result,
+        error=error,
+    )

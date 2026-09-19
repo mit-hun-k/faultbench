@@ -59,11 +59,23 @@ class Injector:
         self._timeout_seconds = timeout_seconds
         self._on_event = on_event
 
-    def call(self, service: str, op: str, fn: Callable[[], Any]) -> Any:
-        """Run `fn` under the fault rule for `service.op`."""
+    def call(
+        self,
+        service: str,
+        op: str,
+        fn: Callable[[], Any],
+        on_decision: Callable[[str | None, float], None] | None = None,
+    ) -> Any:
+        """Run `fn` under the fault rule for `service.op`.
+
+        `on_decision(fault_kind, latency_ms)` is called once the fault is decided, before the
+        operation runs — so a recorder can log what was injected even if the call then fails.
+        """
         rule = self.profile.resolve(service, op)
-        self._apply_latency(rule)
+        latency_ms = self._apply_latency(rule)
         kind = self._roll(rule.errors)
+        if on_decision:
+            on_decision(kind, latency_ms)
         self._emit(service, op, kind)
         if kind is None:
             return fn()
@@ -79,10 +91,13 @@ class Injector:
         raise FaultError(kind, f"{op}: injected {kind}")
 
     # --- internals ---------------------------------------------------------------
-    def _apply_latency(self, rule: FaultRule) -> None:
-        if rule.latency_ms:
-            lo, hi = rule.latency_ms
-            self._sleep(self._rng.uniform(lo, hi) / 1000.0)
+    def _apply_latency(self, rule: FaultRule) -> float:
+        if not rule.latency_ms:
+            return 0.0
+        lo, hi = rule.latency_ms
+        ms = self._rng.uniform(lo, hi)
+        self._sleep(ms / 1000.0)
+        return ms
 
     def _roll(self, errors: dict[str, float]) -> str | None:
         if not errors:

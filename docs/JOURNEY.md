@@ -37,12 +37,12 @@ Each piece: what it is, why we need it, and whether it's done.
 **Why:** Testing tools that live outside a developer's normal workflow get ignored. Inside pytest, it's just one more test file.
 **Built:** 19 Sep. A test tags itself with `@pytest.mark.world("shop.yaml")` and asks for `world` and `mcp_server`; the plugin builds them and cleans up. The real refund test now reads like an ordinary pytest test and passes green against a fault-free world.
 
-### 6. Pass rate and trace 🔨 now
-**What:** Run a test 20 times and report a pass rate, plus a recording of every tool call so a failure shows *why*.
+### 6. Pass rate and trace ✅
+**What:** Run a test many times and report a pass rate, plus a recording of every tool call so a failure shows *why*.
 **Why:** Agents are random; a single pass/fail lies. The line "17/20 passed, 3 duplicate refunds after a timeout" *is* the product. Everything before this exists to make that line possible.
-**Done when:** That line prints, and each failure has a readable trace.
+**Built:** 19 Sep. Running the refund test 6 times under a 20% timeout printed `5/6 passed (83%)` and, for the failing run, the trace `get_order → create_return → issue_refund!timeout → issue_refund` — the double refund, caught and explained. `min_pass_rate` turns the rate into a CI pass/fail.
 
-### 7. Rules and smarter faults ⬜
+### 7. Rules and smarter faults 🔨 now
 **What:** Business rules in Python ("returns only within 30 days"), dates and enums, and faults that depend on conditions ("orders younger than 2 hours aren't found yet").
 **Why:** Real systems have rules and real failures are conditional. Without this the fake world is too simple to catch interesting bugs.
 
