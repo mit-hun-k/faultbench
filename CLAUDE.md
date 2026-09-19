@@ -1,7 +1,7 @@
-# worldbench
+# faultbench
 
 Fake, stateful worlds with fault injection for testing tool-using AI agents.
-A user declares services and records in `world.yaml`; worldbench serves them as MCP
+A user declares services and records in `world.yaml`; faultbench serves them as MCP
 tools, injects latency/errors/clock skew on demand, records every call, and lets
 pytest assert on the world's end state.
 
@@ -25,7 +25,7 @@ Target: under 3,000 lines for v0.1.
     uv run pytest                 # harness unit tests
     uv run pytest examples/shop   # example agent tests (needs a model API key)
     uv run ruff check . && uv run ruff format .
-    uv run worldbench serve examples/shop/worlds/shop.yaml
+    uv run faultbench serve examples/shop/worlds/shop.yaml
 
 ## Session protocol
 1. Read STATUS.md, ARCHITECTURE.md (relevant section), DECISIONS.md.
@@ -38,14 +38,14 @@ Target: under 3,000 lines for v0.1.
    "Built." note (what exists now, not how), move the "Now" marker to the next one. Commit.
 
 ## Layout
-    src/worldbench/world/    schema.py engine.py seed.py       # YAML -> stateful tables
-    src/worldbench/faults/   profile.py injector.py clock.py   # latency, errors, fake time
-    src/worldbench/server/   mcp_server.py operations.py       # world -> MCP tools
-    src/worldbench/trace/    recorder.py queries.py            # JSONL trace of every call
-    src/worldbench/pytest_plugin.py                            # fixtures, markers, --runs
-    src/worldbench/cli.py                                      # `worldbench serve`
+    src/faultbench/world/    schema.py engine.py seed.py       # YAML -> stateful tables
+    src/faultbench/faults/   profile.py injector.py clock.py   # latency, errors, fake time
+    src/faultbench/server/   mcp_server.py operations.py       # world -> MCP tools
+    src/faultbench/trace/    recorder.py queries.py            # JSONL trace of every call
+    src/faultbench/pytest_plugin.py                            # fixtures, markers, --runs
+    src/faultbench/cli.py                                      # `faultbench serve`
     examples/shop/           the refund agent demo (world, rules, agent, tests)
-    tests/                   unit tests for worldbench itself
+    tests/                   unit tests for faultbench itself
     docs/                    ARCHITECTURE, DECISIONS, STATUS, user docs
 
 Background (why this exists, market landscape, 12-weekend plan):

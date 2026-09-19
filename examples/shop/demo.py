@@ -1,6 +1,6 @@
 """End-to-end refund demo.
 
-Runs the Pydantic AI agent against a worldbench MCP server generated from
+Runs the Pydantic AI agent against a faultbench MCP server generated from
 `worlds/shop.yaml` (milestone 3), then prints the final world state and flags any problems.
 This is a feel-the-problem script, not a test.
 
@@ -10,7 +10,7 @@ This is a feel-the-problem script, not a test.
 
 Needs a provider key (copy .env.example to .env and fill it in). Without faults the agent
 behaves. With --faults, issue_refund times out 10% of the time (after executing) — run it a
-few times and you'll catch the agent refunding a customer twice. Set WORLDBENCH_RUN_INDEX to
+few times and you'll catch the agent refunding a customer twice. Set FAULTBENCH_RUN_INDEX to
 walk the deterministic fault sequence.
 """
 
@@ -25,7 +25,7 @@ from pathlib import Path
 
 from agent import DEFAULT_WORLD, MODEL, run_agent
 
-from worldbench.world import World
+from faultbench.world import World
 
 # Which env key each provider prefix needs, so we can fail early with a clear message.
 PROVIDER_KEYS = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
@@ -93,13 +93,13 @@ def main() -> int:
     if key and not os.environ.get(key):
         print(
             f"{key} is not set (needed for model {MODEL!r}). Add it to .env, or set "
-            f"WORLDBENCH_DEMO_MODEL to a provider you have a key for."
+            f"FAULTBENCH_DEMO_MODEL to a provider you have a key for."
         )
         return 1
 
     args = sys.argv[1:]
     faults = "--faults" in args
-    run_index = int(os.environ.get("WORLDBENCH_RUN_INDEX", "0"))
+    run_index = int(os.environ.get("FAULTBENCH_RUN_INDEX", "0"))
     positional = [a for a in args if not a.startswith("-")]
 
     # Pick a delivered order from the same (deterministic) world the server will build.

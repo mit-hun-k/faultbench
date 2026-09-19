@@ -1,4 +1,4 @@
-"""worldbench.world — see docs/ARCHITECTURE.md."""
+"""faultbench.world — see docs/ARCHITECTURE.md."""
 
 from .engine import Diff, Record, Table, World
 from .schema import (

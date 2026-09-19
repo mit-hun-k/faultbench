@@ -2,7 +2,7 @@
 pass rate. Milestones 5–8.
 
 Registered via the `pytest11` entry point in pyproject.toml, so it loads automatically once
-worldbench is installed. A test declares what it needs with markers and receives ready-built
+faultbench is installed. A test declares what it needs with markers and receives ready-built
 objects as fixtures:
 
     @pytest.mark.world("worlds/shop.yaml")
@@ -166,7 +166,7 @@ def _wait_for_port(host: str, port: int, proc: subprocess.Popen, timeout: float 
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if proc.poll() is not None:
-            raise RuntimeError(f"worldbench server exited early (code {proc.returncode})")
+            raise RuntimeError(f"faultbench server exited early (code {proc.returncode})")
         with socket.socket() as s:
             s.settimeout(0.5)
             try:
@@ -174,12 +174,12 @@ def _wait_for_port(host: str, port: int, proc: subprocess.Popen, timeout: float 
                 return
             except OSError:
                 time.sleep(0.1)
-    raise TimeoutError(f"worldbench server did not come up on {host}:{port} in {timeout}s")
+    raise TimeoutError(f"faultbench server did not come up on {host}:{port} in {timeout}s")
 
 
 @pytest.fixture
 def mcp_url(request: pytest.FixtureRequest, tmp_path: Path):
-    """A running MCP server over HTTP: spawns `worldbench serve --http` as a subprocess and
+    """A running MCP server over HTTP: spawns `faultbench serve --http` as a subprocess and
     yields its URL. Use `mcp_url.snapshot()` to read the world's end state. `@pytest.mark.faults`
     (if present) applies the world file's own faults: block (inline dict faults aren't
     supported over HTTP)."""
@@ -191,7 +191,7 @@ def mcp_url(request: pytest.FixtureRequest, tmp_path: Path):
     cmd = [
         sys.executable,
         "-m",
-        "worldbench.cli",
+        "faultbench.cli",
         "serve",
         str(_resolve(request, world_path)),
         "--http",
@@ -279,7 +279,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config: pytest.Config)
     if not groups:
         return
     tr = terminalreporter
-    tr.write_sep("=", "worldbench: pass rate over runs")
+    tr.write_sep("=", "faultbench: pass rate over runs")
     for base, group in groups.items():
         # A run group can be trimmed by -k/-x; report over what actually ran.
         rate = _rate(group)

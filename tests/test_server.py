@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 from pydantic_ai.mcp import FastMCPClient
 
-from worldbench.server import build_server, resolve_handler, run_builtin
-from worldbench.world import World
+from faultbench.server import build_server, resolve_handler, run_builtin
+from faultbench.world import World
 
 SHOP = Path(__file__).resolve().parents[1] / "examples/shop/worlds/shop.yaml"
 
@@ -128,9 +128,9 @@ async def test_enum_param_advertises_its_values():
 
 
 def test_resolve_handler_ok_and_errors():
-    fn = resolve_handler("worldbench.server.operations.run_builtin")
+    fn = resolve_handler("faultbench.server.operations.run_builtin")
     assert callable(fn)
     with pytest.raises(ValueError, match="module.func"):
         resolve_handler("nomodule")
     with pytest.raises(ValueError, match="not found"):
-        resolve_handler("worldbench.server.operations.does_not_exist")
+        resolve_handler("faultbench.server.operations.does_not_exist")

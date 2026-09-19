@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 from pydantic_ai.mcp import FastMCPClient
 
-from worldbench.faults import FakeClock, FaultProfile
-from worldbench.server import build_server
-from worldbench.world import World
+from faultbench.faults import FakeClock, FaultProfile
+from faultbench.server import build_server
+from faultbench.world import World
 
 BANK = Path(__file__).resolve().parents[1] / "examples/bank/worlds/bank.yaml"
 

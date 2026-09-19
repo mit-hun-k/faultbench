@@ -1,8 +1,8 @@
-# worldbench
+# faultbench
 
 **Fake, stateful worlds with fault injection for testing tool-using AI agents.**
 
-Declare your services in a YAML file. worldbench serves them as MCP tools your agent can call,
+Declare your services in a YAML file. faultbench serves them as MCP tools your agent can call,
 makes them slow or broken on purpose, records every call, and lets you assert on the world's
 end state from pytest, twenty runs at a time.
 
@@ -34,7 +34,7 @@ faults:
 ```
 
 ```python
-from worldbench.integrations.pydantic_ai import run_agent  # or wire any MCP framework
+from faultbench.integrations.pydantic_ai import run_agent  # or wire any MCP framework
 
 
 @pytest.mark.world("world.yaml")
@@ -53,7 +53,7 @@ async def test_refund_issued_exactly_once(world, mcp_server, trace):
 ```
 
 ```
-worldbench: pass rate over runs
+faultbench: pass rate over runs
 test_refund_issued_exactly_once: 17/20 passed (85%)  min_pass_rate=95% -> FAIL
     run4:  get_order → create_return → issue_refund!timeout → issue_refund
     run11: get_order → create_return → issue_refund!timeout → issue_refund
@@ -65,7 +65,7 @@ refunded twice — the production bug you couldn't trigger on the real payments 
 test with the trace that explains it.
 
 ## What it can and can't model
-worldbench models services as **flat records** (fields: `str/int/float/bool/datetime/enum/ref`)
+faultbench models services as **flat records** (fields: `str/int/float/bool/datetime/enum/ref`)
 with built-in CRUD plus **custom Python operations** for anything else.
 
 - **Fits well:** entities with enums and `ref` relationships; CRUD and list-by-field; business
@@ -77,7 +77,7 @@ with built-in CRUD plus **custom Python operations** for anything else.
   parent without children inline, so if your agent's correctness depends on a nested *response*
   shape, the fake's shape differs.
 - **Not in 0.1:** pagination/cursors, non-equality filters, auth, webhooks, per-request
-  idempotency (that last is a bug worldbench helps you *catch*, not prevent). Generated seed
+  idempotency (that last is a bug faultbench helps you *catch*, not prevent). Generated seed
   values are type-correct but not domain-aware — set realistic values in a handler or your test.
 
 ## Security
@@ -86,14 +86,14 @@ loading or serving one executes that code. Only use world files you trust, like 
 
 ## Not in scope
 Simulated users, LLM judges, dashboards. Use LangWatch Scenario / DeepEval for users and your own
-judge for scoring; worldbench is the environment.
+judge for scoring; faultbench is the environment.
 
 ## Quickstart
 
     uv sync --all-extras
     uv run pytest                                             # the harness test suite (no API key)
-    uv run worldbench serve examples/shop/worlds/shop.yaml    # serve a world over MCP (stdio)
-    uv run worldbench serve examples/bank/worlds/bank.yaml --http   # ...or over HTTP
+    uv run faultbench serve examples/shop/worlds/shop.yaml    # serve a world over MCP (stdio)
+    uv run faultbench serve examples/bank/worlds/bank.yaml --http   # ...or over HTTP
 
 Then write your own: [docs/WORLDS.md](docs/WORLDS.md) and [docs/TESTING.md](docs/TESTING.md).
 

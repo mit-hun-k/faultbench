@@ -1,12 +1,12 @@
 """Refund-support agent for the shop demo.
 
-A Pydantic AI agent that talks to a worldbench MCP server over stdio. As of milestone 3 the
-server is *generated from* `worlds/shop.yaml` (`python -m worldbench.server`), replacing the
+A Pydantic AI agent that talks to a faultbench MCP server over stdio. As of milestone 3 the
+server is *generated from* `worlds/shop.yaml` (`python -m faultbench.server`), replacing the
 throwaway `tools_dict.py`. The agent itself is unchanged: it just sees three MCP tools.
 
-Model: set via WORLDBENCH_DEMO_MODEL (default `openai:gpt-5-mini`); e.g.
+Model: set via FAULTBENCH_DEMO_MODEL (default `openai:gpt-5-mini`); e.g.
 `anthropic:claude-opus-5`. Needs the matching provider key in the env (see .env.example).
-Nothing in worldbench itself makes LLM calls — only this example does.
+Nothing in faultbench itself makes LLM calls — only this example does.
 """
 
 from __future__ import annotations
@@ -18,9 +18,9 @@ from pathlib import Path
 from pydantic_ai import Agent
 from pydantic_ai.mcp import FastMCPClient, MCPToolset, StdioTransport
 
-from worldbench.integrations.pydantic_ai import toolset as wb_toolset
+from faultbench.integrations.pydantic_ai import toolset as wb_toolset
 
-MODEL = os.environ.get("WORLDBENCH_DEMO_MODEL", "openai:gpt-5-mini")
+MODEL = os.environ.get("FAULTBENCH_DEMO_MODEL", "openai:gpt-5-mini")
 DEFAULT_WORLD = str(Path(__file__).parent / "worlds" / "shop.yaml")
 
 SYSTEM_PROMPT = """\
@@ -45,24 +45,24 @@ def build_toolset(
     run_index: int = 0,
     server: object | None = None,
 ) -> MCPToolset:
-    """Expose a worldbench server as a Pydantic AI toolset.
+    """Expose a faultbench server as a Pydantic AI toolset.
 
     If `server` (an in-process MCPServer, e.g. from the pytest `mcp_server` fixture) is given,
-    connect to it in memory via the worldbench helper. Otherwise spawn `python -m
-    worldbench.server` as a subprocess (this demo's way of running a live faulty world).
+    connect to it in memory via the faultbench helper. Otherwise spawn `python -m
+    faultbench.server` as a subprocess (this demo's way of running a live faulty world).
     """
     if server is not None:
         return wb_toolset(server)
     world_path = world_path or DEFAULT_WORLD
     env: dict[str, str] = {}
     if state_file:
-        env["WORLDBENCH_STATE_FILE"] = state_file
+        env["FAULTBENCH_STATE_FILE"] = state_file
     if faults:
-        env["WORLDBENCH_FAULTS"] = "1"
-        env["WORLDBENCH_RUN_INDEX"] = str(run_index)
+        env["FAULTBENCH_FAULTS"] = "1"
+        env["FAULTBENCH_RUN_INDEX"] = str(run_index)
     transport = StdioTransport(
         command=sys.executable,
-        args=["-m", "worldbench.server", world_path],
+        args=["-m", "faultbench.server", world_path],
         env=env or None,
     )
     return MCPToolset(FastMCPClient(transport))

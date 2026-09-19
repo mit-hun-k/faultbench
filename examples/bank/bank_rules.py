@@ -1,7 +1,7 @@
 """Custom operation handlers for the bank world.
 
 A custom handler has the signature `func(world, clock, **args)` and returns a JSON-serialisable
-result. Type the args so worldbench derives the right tool schema (e.g. `amount: float`).
+result. Type the args so faultbench derives the right tool schema (e.g. `amount: float`).
 Raise ValueError/LookupError to reject a call — it becomes a clean tool error for the agent.
 """
 

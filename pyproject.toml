@@ -1,5 +1,5 @@
 [project]
-name = "worldbench"
+name = "faultbench"
 version = "0.1.0"
 description = "Fake, stateful worlds with fault injection for testing tool-using AI agents. Exposed over MCP, asserted from pytest."
 readme = "README.md"
@@ -30,10 +30,10 @@ openai-agents = ["openai-agents>=0.2"]
 examples = ["pydantic-ai>=2.0"]
 
 [project.entry-points.pytest11]
-worldbench = "worldbench.pytest_plugin"
+faultbench = "faultbench.pytest_plugin"
 
 [project.scripts]
-worldbench = "worldbench.cli:main"
+faultbench = "faultbench.cli:main"
 
 [dependency-groups]
 dev = [
@@ -47,7 +47,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/worldbench"]
+packages = ["src/faultbench"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

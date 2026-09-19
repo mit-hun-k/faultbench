@@ -1,16 +1,16 @@
-"""`worldbench` command line. `serve` runs a world.yaml over MCP (stdio or HTTP)."""
+"""`faultbench` command line. `serve` runs a world.yaml over MCP (stdio or HTTP)."""
 
 import argparse
 import sys
 
-from worldbench import __version__
-from worldbench.faults import FaultProfile
-from worldbench.server import serve_http, serve_stdio
+from faultbench import __version__
+from faultbench.faults import FaultProfile
+from faultbench.server import serve_http, serve_stdio
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="worldbench", description=__doc__)
-    parser.add_argument("--version", action="version", version=f"worldbench {__version__}")
+    parser = argparse.ArgumentParser(prog="faultbench", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"faultbench {__version__}")
     sub = parser.add_subparsers(dest="command")
 
     serve = sub.add_parser("serve", help="serve a world.yaml over MCP (stdio or HTTP)")
@@ -35,7 +35,7 @@ def _serve(args: argparse.Namespace) -> int:
     faults = FaultProfile.from_world_file(args.world) if args.faults else None
     if args.http:
         print(
-            f"worldbench: serving {args.world} at http://{args.host}:{args.port}/mcp",
+            f"faultbench: serving {args.world} at http://{args.host}:{args.port}/mcp",
             file=sys.stderr,
         )
         serve_http(

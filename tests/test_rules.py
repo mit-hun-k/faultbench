@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 from pydantic_ai.mcp import FastMCPClient
 
-from worldbench.faults import FakeClock, FaultError, FaultProfile, Injector
-from worldbench.faults.clock import DEFAULT_NOW
-from worldbench.server import build_server
-from worldbench.world import World
-from worldbench.world.seed import WORLD_EPOCH
+from faultbench.faults import FakeClock, FaultError, FaultProfile, Injector
+from faultbench.faults.clock import DEFAULT_NOW
+from faultbench.server import build_server
+from faultbench.world import World
+from faultbench.world.seed import WORLD_EPOCH
 
 SHOP = Path(__file__).resolve().parents[1] / "examples/shop/worlds/shop.yaml"
 MINI = Path(__file__).parent / "worlds/mini.yaml"

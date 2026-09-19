@@ -1,6 +1,6 @@
 # Writing a world
 
-A world is one YAML file. worldbench loads it into in-memory tables, serves each operation as
+A world is one YAML file. faultbench loads it into in-memory tables, serves each operation as
 an MCP tool, and (optionally) injects faults. Same file + same `seed` ⇒ byte-identical data
 every run.
 
@@ -69,7 +69,7 @@ Per-field generation controls and seeding from CSV/JSON are not in 0.1.
 
 ## What you can and can't model
 
-worldbench records are **flat** — fields are scalars, `enum`, `datetime`, or `ref`. There are
+faultbench records are **flat** — fields are scalars, `enum`, `datetime`, or `ref`. There are
 **no nested objects or array fields**. That shapes how you model real APIs:
 
 - **One-to-many / arrays:** use a related record type + a `ref` (e.g. an `invoices` record and a
@@ -149,9 +149,9 @@ Durations are `30s`, `2h`, `1d`. Faults are applied in order: latency → condit
 ## Serving a world
 
 ```bash
-worldbench serve world.yaml                 # stdio (for a local agent subprocess)
-worldbench serve world.yaml --http          # http://127.0.0.1:8000/mcp (any MCP client)
-worldbench serve world.yaml --http --faults # also apply the faults: block
+faultbench serve world.yaml                 # stdio (for a local agent subprocess)
+faultbench serve world.yaml --http          # http://127.0.0.1:8000/mcp (any MCP client)
+faultbench serve world.yaml --http --faults # also apply the faults: block
 ```
 
 To test an agent against a world, see `docs/TESTING.md`.

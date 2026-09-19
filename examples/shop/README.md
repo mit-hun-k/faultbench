@@ -1,7 +1,7 @@
 # shop example
 
 The refund agent demo: a Pydantic AI agent that returns and refunds orders, wired to a
-worldbench world so we can test it. As of milestone 3 the MCP server is **generated from**
+faultbench world so we can test it. As of milestone 3 the MCP server is **generated from**
 `worlds/shop.yaml`; the milestone-1 hand-written server is gone.
 
 ## Files
@@ -10,9 +10,9 @@ worldbench world so we can test it. As of milestone 3 the MCP server is **genera
   `issue_refund`, and a `faults:` block (used from milestone 4).
 - `shop_rules.py` — the `create_return` custom handler: allows a return only for a
   `delivered` order, and (once there's a clock, milestone 4) within a 30-day window.
-- `agent.py` — the Pydantic AI refund agent. It spawns `python -m worldbench.server
+- `agent.py` — the Pydantic AI refund agent. It spawns `python -m faultbench.server
   worlds/shop.yaml` over stdio and just sees the generated MCP tools. Knows nothing about
-  worldbench internals.
+  faultbench internals.
 - `demo.py` — picks a delivered order, runs one request end to end, then prints the final
   world state and flags problems (double refund, refund of a non-returned order).
 
@@ -24,9 +24,9 @@ uv run python examples/shop/demo.py
 uv run python examples/shop/demo.py "return order 5 for me"   # a specific order
 ```
 
-Model is `WORLDBENCH_DEMO_MODEL` (default `openai:gpt-5-mini`); set it to e.g.
+Model is `FAULTBENCH_DEMO_MODEL` (default `openai:gpt-5-mini`); set it to e.g.
 `anthropic:claude-opus-5` and provide the matching key. You can also serve any world by hand:
-`uv run python -m worldbench.server examples/shop/worlds/shop.yaml`.
+`uv run python -m faultbench.server examples/shop/worlds/shop.yaml`.
 
 ## What the demo shows (the problem)
 
@@ -47,10 +47,10 @@ retrying agent issues a second refund. Turn it on:
 
 ```bash
 uv run python examples/shop/demo.py --faults
-WORLDBENCH_RUN_INDEX=4 uv run python examples/shop/demo.py --faults   # a run that triggers it
+FAULTBENCH_RUN_INDEX=4 uv run python examples/shop/demo.py --faults   # a run that triggers it
 ```
 
-Faults are deterministic: same seed + `WORLDBENCH_RUN_INDEX` ⇒ same fault sequence, so a
+Faults are deterministic: same seed + `FAULTBENCH_RUN_INDEX` ⇒ same fault sequence, so a
 failure reproduces exactly. Seen live at run_index 4: the agent refunded order 2 twice, and
 the demo flagged `order 2 was refunded 2 times (double refund)`.
 

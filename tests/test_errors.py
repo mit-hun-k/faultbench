@@ -2,7 +2,7 @@
 
 import pytest
 
-from worldbench.world import World, parse_world
+from faultbench.world import World, parse_world
 
 
 def _write(tmp_path, text):

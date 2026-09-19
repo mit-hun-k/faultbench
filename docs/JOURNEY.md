@@ -48,10 +48,10 @@ Each piece: what it is, why we need it, and whether it's done.
 **Built:** 19 Sep. The fake clock now drives real rules: a delivered order is refundable only within 30 days (move the clock forward and it's refused), a just-placed order isn't visible yet (sync lag), and too many calls in a window get rate-limited — all deterministic and testable without waiting.
 
 ### 8. Second framework ✅
-**What:** Serve the world over HTTP, a `worldbench serve` command, and prove a *different* MCP client — not the one the agent uses — drives the same world.
+**What:** Serve the world over HTTP, a `faultbench serve` command, and prove a *different* MCP client — not the one the agent uses — drives the same world.
 **Why:** "Works with any framework" is a claim until something other than Pydantic AI talks to the world. Then it's a fact for the README.
-**Built:** 19 Sep. `worldbench serve --http` puts the world on a URL, and the reference MCP client connects to it, calls the tools, and changes the world — no Pydantic AI involved. Any MCP-speaking framework connects the same way.
-**Validated (during release):** a real second agent framework — the OpenAI Agents SDK — drove the same world over HTTP. Fault-free it refunded cleanly; with a forced timeout it retried and refunded the customer *three times* while telling them it had failed — and worldbench caught it. Testing this before launch also flushed out a genuine worldbench bug (faulted writes weren't being mirrored to out-of-process readers), now fixed.
+**Built:** 19 Sep. `faultbench serve --http` puts the world on a URL, and the reference MCP client connects to it, calls the tools, and changes the world — no Pydantic AI involved. Any MCP-speaking framework connects the same way.
+**Validated (during release):** a real second agent framework — the OpenAI Agents SDK — drove the same world over HTTP. Fault-free it refunded cleanly; with a forced timeout it retried and refunded the customer *three times* while telling them it had failed — and faultbench caught it. Testing this before launch also flushed out a genuine faultbench bug (faulted writes weren't being mirrored to out-of-process readers), now fixed.
 
 ### 9. Polish and docs ✅
 **What:** Clear error messages on bad world files, a second example world, and user docs.
@@ -62,7 +62,7 @@ names the problem instead of a stack trace.
 
 ### 10. Release 0.1.0 🔨 now
 **What:** README that opens with the 20-run demo, a one-minute recording, CI, and the package on PyPI.
-**Why:** `pip install worldbench` working on a stranger's machine is the difference between a repo and a project.
+**Why:** `pip install faultbench` working on a stranger's machine is the difference between a repo and a project.
 **So far (19 Sep):** a one-line helper so the first test is copy-paste (`run_agent(model, prompt, mcp=...)`), the README demo is now the real runnable one, CI is written, and the 0.1.0 wheel builds and installs clean in a fresh environment. Still to do, and held for you: pushing to GitHub (new account) and publishing to PyPI — the irreversible steps.
 
 ### 11. Launch ⬜

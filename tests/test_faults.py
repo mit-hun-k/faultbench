@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from pydantic_ai.mcp import FastMCPClient
 
-from worldbench.faults import (
+from faultbench.faults import (
     FakeClock,
     FaultError,
     FaultProfile,
@@ -16,8 +16,8 @@ from worldbench.faults import (
     Injector,
     parse_duration,
 )
-from worldbench.server import build_server
-from worldbench.world import World
+from faultbench.server import build_server
+from faultbench.world import World
 
 SHOP = Path(__file__).resolve().parents[1] / "examples/shop/worlds/shop.yaml"
 

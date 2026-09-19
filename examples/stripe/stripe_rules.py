@@ -50,7 +50,7 @@ def create_refund(
 
 
 def create_invoice(world, clock, customer_id: str, lines: list) -> dict:
-    """Stripe invoices carry a LIST of line items. worldbench has no list/nested field, so we
+    """Stripe invoices carry a LIST of line items. faultbench has no list/nested field, so we
     take the array as a custom-op arg and flatten it into a related record type."""
     total = sum(li["amount"] * li.get("quantity", 1) for li in lines)
     inv = world.invoices.insert(

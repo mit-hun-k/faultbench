@@ -1,7 +1,7 @@
 """The refund agent, as a pytest test.
 
 Runs the real agent against a world built by the plugin's fixtures, then asserts on world
-state. Uses the worldbench Pydantic AI helper `run_agent(model, prompt, mcp=...)` — the same
+state. Uses the faultbench Pydantic AI helper `run_agent(model, prompt, mcp=...)` — the same
 one-liner the docs show. Needs a model API key, so it is skipped without one:
 
     uv run pytest examples/shop
@@ -12,7 +12,7 @@ import os
 import pytest
 from agent import MODEL, SYSTEM_PROMPT
 
-from worldbench.integrations.pydantic_ai import run_agent
+from faultbench.integrations.pydantic_ai import run_agent
 
 pytestmark = pytest.mark.skipif(
     not (os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")),

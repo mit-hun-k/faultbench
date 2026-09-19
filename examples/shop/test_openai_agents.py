@@ -1,5 +1,5 @@
 """Framework-neutrality with a real second agent framework: the OpenAI Agents SDK drives the
-shop world over HTTP (not Pydantic AI). Proves worldbench is a plain MCP server any framework
+shop world over HTTP (not Pydantic AI). Proves faultbench is a plain MCP server any framework
 can test against.
 
 Needs the OpenAI Agents SDK and a key:  pip install openai-agents  (+ OPENAI_API_KEY)

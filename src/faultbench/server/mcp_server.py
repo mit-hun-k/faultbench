@@ -106,7 +106,7 @@ def serve_http(
     """Load a world file and serve it over streamable HTTP at http://host:port{path} (blocking).
 
     The served world runs in its own process, so it does NOT share the in-process `world`
-    object; a client asserts on end state via the state file (see WORLDBENCH_STATE_FILE)."""
+    object; a client asserts on end state via the state file (see FAULTBENCH_STATE_FILE)."""
     world = World.load(world_path)
     if clock is None:
         clock = FakeClock()
@@ -230,11 +230,11 @@ def _make_tool_fn(
             _record_trace(recorder, op.name, kwargs, decision, world, ok=False, error=str(exc))
             # A failed call may still have mutated the world (a timeout runs the op, then
             # fails), so mirror state on the error path too — else the snapshot under-reports
-            # exactly the write-then-timeout bug worldbench exists to catch.
+            # exactly the write-then-timeout bug faultbench exists to catch.
             _mirror_state(world, state_file)
             raise
         _record_trace(recorder, op.name, kwargs, decision, world, ok=True, result=result)
-        print(f"[worldbench] {op.name}({kwargs}) -> {result}", file=sys.stderr)
+        print(f"[faultbench] {op.name}({kwargs}) -> {result}", file=sys.stderr)
         _mirror_state(world, state_file)
         return result
 

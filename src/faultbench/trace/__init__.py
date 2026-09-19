@@ -1,4 +1,4 @@
-"""worldbench.trace — see docs/ARCHITECTURE.md."""
+"""faultbench.trace — see docs/ARCHITECTURE.md."""
 
 from .queries import Trace
 from .recorder import Recorder

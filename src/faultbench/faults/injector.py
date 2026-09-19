@@ -146,6 +146,6 @@ class Injector:
     def _emit(self, service: str, op: str, kind: str | None) -> None:
         event = {"service": service, "op": op, "fault": kind}
         if kind:
-            print(f"[worldbench:fault] {service}.{op} -> {kind}", file=sys.stderr)
+            print(f"[faultbench:fault] {service}.{op} -> {kind}", file=sys.stderr)
         if self._on_event:
             self._on_event(event)

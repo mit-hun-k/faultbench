@@ -1,6 +1,6 @@
-# Testing an agent with worldbench
+# Testing an agent with faultbench
 
-worldbench is a pytest plugin (it loads automatically once installed). You tag a test with
+faultbench is a pytest plugin (it loads automatically once installed). You tag a test with
 markers, ask for fixtures, run your agent against the served world, and assert on the world's
 end state — over many seeded runs, because one pass of a probabilistic agent lies.
 
@@ -27,11 +27,11 @@ end state — over many seeded runs, because one pass of a probabilistic agent l
 ## In-process (recommended)
 
 The `mcp_server` fixture shares the `world` object, so you assert on state directly. With
-Pydantic AI, the bundled helper is a one-liner (`pip install 'worldbench[pydantic-ai]'`):
+Pydantic AI, the bundled helper is a one-liner (`pip install 'faultbench[pydantic-ai]'`):
 
 ```python
 import pytest
-from worldbench.integrations.pydantic_ai import run_agent
+from faultbench.integrations.pydantic_ai import run_agent
 
 
 @pytest.mark.world("worlds/shop.yaml")
@@ -52,13 +52,13 @@ async def test_refund_exactly_once(world, mcp_server, trace):
 `run_agent(model, prompt, mcp=...)` accepts the in-process `mcp_server` or the `mcp_url`
 string, so the client side reads the same over both transports. For any other framework, wire
 your own agent to `mcp_server` (in-process) or `str(mcp_url)` (HTTP) — it's a standard MCP
-server, nothing worldbench-specific.
+server, nothing faultbench-specific.
 
 Run it: `uv run pytest` (or `--runs=50` to override the marker). The summary prints a pass
 rate per test and a short trace for each failing run:
 
 ```
-worldbench: pass rate over runs
+faultbench: pass rate over runs
 tests/test_refund.py::test_refund_exactly_once: 17/20 passed (85%)  min_pass_rate=90% -> FAIL
     run4: get_order → create_return → issue_refund!timeout → issue_refund
 ```

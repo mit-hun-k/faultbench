@@ -3,9 +3,9 @@ in-process server and a URL, and the in-process one lists the world's tools."""
 
 from pathlib import Path
 
-from worldbench.integrations.pydantic_ai import agent, toolset
-from worldbench.server import build_server
-from worldbench.world import World
+from faultbench.integrations.pydantic_ai import agent, toolset
+from faultbench.server import build_server
+from faultbench.world import World
 
 MINI = Path(__file__).parent / "worlds/mini.yaml"
 

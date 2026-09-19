@@ -1,6 +1,6 @@
 """HTTP transport + framework-neutrality (milestone 8).
 
-Serves a world over streamable HTTP (via `worldbench serve --http`, spawned by the `mcp_url`
+Serves a world over streamable HTTP (via `faultbench serve --http`, spawned by the `mcp_url`
 fixture) and drives it with the *reference* `mcp.Client` — a different client stack from the
 Pydantic AI agent used elsewhere. That the world is a plain MCP-over-HTTP server any MCP
 client can use is the "works with any framework" claim, made keyless and deterministic.
@@ -9,7 +9,7 @@ client can use is the "works with any framework" claim, made keyless and determi
 import pytest
 from mcp import Client
 
-from worldbench.cli import main as cli_main
+from faultbench.cli import main as cli_main
 
 
 @pytest.mark.world("worlds/mini.yaml")
@@ -26,7 +26,7 @@ async def test_reference_mcp_client_over_http(mcp_url):
 
 
 def test_cli_serve_requires_world(capsys):
-    # `worldbench serve` with no world path exits non-zero (argparse usage error).
+    # `faultbench serve` with no world path exits non-zero (argparse usage error).
     with pytest.raises(SystemExit) as exc:
         cli_main(["serve"])
     assert exc.value.code != 0

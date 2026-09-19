@@ -3,17 +3,17 @@
 import tomllib
 from pathlib import Path
 
-import worldbench
-from worldbench.cli import main
+import faultbench
+from faultbench.cli import main
 
 
 def test_version_is_set():
-    assert worldbench.__version__
+    assert faultbench.__version__
 
 
 def test_version_matches_pyproject():
     pyproject = tomllib.loads((Path(__file__).resolve().parents[1] / "pyproject.toml").read_text())
-    assert worldbench.__version__ == pyproject["project"]["version"]
+    assert faultbench.__version__ == pyproject["project"]["version"]
 
 
 def test_cli_help_runs():

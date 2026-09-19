@@ -4,8 +4,8 @@ driven without an LLM."""
 import pytest
 from pydantic_ai.mcp import FastMCPClient
 
-from worldbench.faults import FakeClock, FaultProfile
-from worldbench.world import World
+from faultbench.faults import FakeClock, FaultProfile
+from faultbench.world import World
 
 
 @pytest.mark.world("worlds/mini.yaml")
@@ -18,7 +18,7 @@ def test_world_fixture_builds_the_world(world):
 def test_world_fixture_without_marker_errors(pytestconfig):
     # The marker is required; using the fixture without it raises a clear UsageError.
     # (Covered here by asserting the helper contract rather than triggering collection errors.)
-    from worldbench.pytest_plugin import _marker  # noqa: PLC0415
+    from faultbench.pytest_plugin import _marker  # noqa: PLC0415
 
     class _Node:
         def get_closest_marker(self, name):

@@ -1,4 +1,4 @@
-"""worldbench.faults — see docs/ARCHITECTURE.md."""
+"""faultbench.faults — see docs/ARCHITECTURE.md."""
 
 from .clock import DEFAULT_NOW, FakeClock
 from .injector import FaultError, FaultTimeout, Injector

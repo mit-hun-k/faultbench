@@ -13,8 +13,8 @@ ledger, with one custom rule: money only moves between the right accounts, with 
 ## Serve it
 
 ```bash
-uv run worldbench serve examples/bank/worlds/bank.yaml            # stdio
-uv run worldbench serve examples/bank/worlds/bank.yaml --http     # http://127.0.0.1:8000/mcp
+uv run faultbench serve examples/bank/worlds/bank.yaml            # stdio
+uv run faultbench serve examples/bank/worlds/bank.yaml --http     # http://127.0.0.1:8000/mcp
 ```
 
 ## Test it

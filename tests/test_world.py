@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from worldbench.world import FieldType, World, parse_world
-from worldbench.world.seed import load_rows
+from faultbench.world import FieldType, World, parse_world
+from faultbench.world.seed import load_rows
 
 SHOP = Path(__file__).resolve().parents[1] / "examples/shop/worlds/shop.yaml"
 

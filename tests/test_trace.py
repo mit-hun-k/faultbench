@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 from pydantic_ai.mcp import FastMCPClient
 
-from worldbench.faults import FaultProfile
-from worldbench.server import build_server
-from worldbench.trace import Recorder, Trace
-from worldbench.world import World
+from faultbench.faults import FaultProfile
+from faultbench.server import build_server
+from faultbench.trace import Recorder, Trace
+from faultbench.world import World
 
 SHOP = Path(__file__).resolve().parents[1] / "examples/shop/worlds/shop.yaml"
 
