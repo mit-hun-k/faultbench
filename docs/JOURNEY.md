@@ -62,6 +62,7 @@ names the problem instead of a stack trace.
 ### 10. Release 0.1.0 🔨 now
 **What:** README that opens with the 20-run demo, a one-minute recording, CI, and the package on PyPI.
 **Why:** `pip install worldbench` working on a stranger's machine is the difference between a repo and a project.
+**So far (19 Sep):** a one-line helper so the first test is copy-paste (`run_agent(model, prompt, mcp=...)`), the README demo is now the real runnable one, CI is written, and the 0.1.0 wheel builds and installs clean in a fresh environment. Still to do, and held for you: pushing to GitHub (new account) and publishing to PyPI — the irreversible steps.
 
 ### 11. Launch ⬜
 **What:** Show HN, the MCP and Pydantic AI communities, a short post telling the double-refund story.

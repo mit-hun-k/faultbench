@@ -26,13 +26,12 @@ end state — over many seeded runs, because one pass of a probabilistic agent l
 
 ## In-process (recommended)
 
-The `mcp_server` fixture shares the `world` object, so you assert on state directly. Point
-your agent's MCP client at it. With Pydantic AI:
+The `mcp_server` fixture shares the `world` object, so you assert on state directly. With
+Pydantic AI, the bundled helper is a one-liner (`pip install 'worldbench[pydantic-ai]'`):
 
 ```python
 import pytest
-from pydantic_ai import Agent
-from pydantic_ai.mcp import FastMCPClient, MCPToolset
+from worldbench.integrations.pydantic_ai import run_agent
 
 
 @pytest.mark.world("worlds/shop.yaml")
@@ -41,11 +40,19 @@ from pydantic_ai.mcp import FastMCPClient, MCPToolset
 @pytest.mark.min_pass_rate(0.9)
 async def test_refund_exactly_once(world, mcp_server, trace):
     order = world.orders.pick(status="delivered")
-    agent = Agent("openai:gpt-5-mini", toolsets=[MCPToolset(FastMCPClient(mcp_server))])
-    async with agent:
-        await agent.run(f"Return order {order.id} and refund me")
+    await run_agent(
+        "openai:gpt-5-mini",
+        f"Return order {order.id} and refund me",
+        mcp=mcp_server,
+        system_prompt="You are a refund agent.",
+    )
     assert len(world.refunds.where(order_id=order.id)) == 1  # a timeout+retry breaks this
 ```
+
+`run_agent(model, prompt, mcp=...)` accepts the in-process `mcp_server` or the `mcp_url`
+string, so the client side reads the same over both transports. For any other framework, wire
+your own agent to `mcp_server` (in-process) or `str(mcp_url)` (HTTP) — it's a standard MCP
+server, nothing worldbench-specific.
 
 Run it: `uv run pytest` (or `--runs=50` to override the marker). The summary prints a pass
 rate per test and a short trace for each failing run:

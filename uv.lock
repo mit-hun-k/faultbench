@@ -2319,7 +2319,7 @@ wheels = [
 
 [[package]]
 name = "worldbench"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "faker" },
@@ -2330,6 +2330,9 @@ dependencies = [
 
 [package.optional-dependencies]
 examples = [
+    { name = "pydantic-ai" },
+]
+pydantic-ai = [
     { name = "pydantic-ai" },
 ]
 
@@ -2346,9 +2349,10 @@ requires-dist = [
     { name = "mcp", specifier = ">=2" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-ai", marker = "extra == 'examples'", specifier = ">=0.4" },
+    { name = "pydantic-ai", marker = "extra == 'pydantic-ai'", specifier = ">=0.4" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
-provides-extras = ["examples"]
+provides-extras = ["pydantic-ai", "examples"]
 
 [package.metadata.requires-dev]
 dev = [

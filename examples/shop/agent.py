@@ -18,6 +18,8 @@ from pathlib import Path
 from pydantic_ai import Agent
 from pydantic_ai.mcp import FastMCPClient, MCPToolset, StdioTransport
 
+from worldbench.integrations.pydantic_ai import toolset as wb_toolset
+
 MODEL = os.environ.get("WORLDBENCH_DEMO_MODEL", "openai:gpt-5-mini")
 DEFAULT_WORLD = str(Path(__file__).parent / "worlds" / "shop.yaml")
 
@@ -46,10 +48,11 @@ def build_toolset(
     """Expose a worldbench server as a Pydantic AI toolset.
 
     If `server` (an in-process MCPServer, e.g. from the pytest `mcp_server` fixture) is given,
-    connect to it in memory. Otherwise spawn `python -m worldbench.server` as a subprocess.
+    connect to it in memory via the worldbench helper. Otherwise spawn `python -m
+    worldbench.server` as a subprocess (this demo's way of running a live faulty world).
     """
     if server is not None:
-        return MCPToolset(FastMCPClient(server))
+        return wb_toolset(server)
     world_path = world_path or DEFAULT_WORLD
     env: dict[str, str] = {}
     if state_file:

@@ -33,19 +33,35 @@ faults:
 ```
 
 ```python
+from worldbench.integrations.pydantic_ai import run_agent  # or wire any MCP framework
+
+
 @pytest.mark.world("world.yaml")
+@pytest.mark.faults("world.yaml")  # inject the faults: block above
 @pytest.mark.runs(20)
-def test_refund_issued_exactly_once(world, mcp_url, trace):
+@pytest.mark.min_pass_rate(0.95)
+async def test_refund_issued_exactly_once(world, mcp_server, trace):
     order = world.orders.pick(status="delivered")
-    run_my_agent(mcp_url, f"Return order {order.id} and refund me")
-    assert len(world.refunds.where(order_id=order.id)) == 1
+    await run_agent(
+        "openai:gpt-5-mini",
+        f"Return order {order.id} and refund me",
+        mcp=mcp_server,
+        system_prompt="You are a refund agent.",
+    )
+    assert len(world.refunds.where(order_id=order.id)) == 1  # a timeout+retry breaks this
 ```
 
 ```
-runs: 20   passed: 17   failed: 3   pass rate: 85%
-FAILED run 04: expected 1 refund, got 2
-  issue_refund -> TIMEOUT (injected)  ->  issue_refund ok  ->  issue_refund ok  <- duplicate
+worldbench: pass rate over runs
+test_refund_issued_exactly_once: 17/20 passed (85%)  min_pass_rate=95% -> FAIL
+    run4:  get_order → create_return → issue_refund!timeout → issue_refund
+    run11: get_order → create_return → issue_refund!timeout → issue_refund
+    run18: get_order → create_return → issue_refund!timeout → issue_refund
 ```
+
+The timeout fired *after* the refund was written, the agent retried, and the customer was
+refunded twice — the production bug you couldn't trigger on the real payments API, now a red
+test with the trace that explains it.
 
 ## Not in scope
 Simulated users, LLM judges, dashboards. Use LangWatch Scenario / DeepEval for users and your own
