@@ -50,7 +50,8 @@ Each piece: what it is, why we need it, and whether it's done.
 ### 8. Second framework ✅
 **What:** Serve the world over HTTP, a `worldbench serve` command, and prove a *different* MCP client — not the one the agent uses — drives the same world.
 **Why:** "Works with any framework" is a claim until something other than Pydantic AI talks to the world. Then it's a fact for the README.
-**Built:** 19 Sep. `worldbench serve --http` puts the world on a URL, and the reference MCP client connects to it, calls the tools, and changes the world — no Pydantic AI involved. Any MCP-speaking framework connects the same way. (A heavier example with a second full agent framework can come later.)
+**Built:** 19 Sep. `worldbench serve --http` puts the world on a URL, and the reference MCP client connects to it, calls the tools, and changes the world — no Pydantic AI involved. Any MCP-speaking framework connects the same way.
+**Validated (during release):** a real second agent framework — the OpenAI Agents SDK — drove the same world over HTTP. Fault-free it refunded cleanly; with a forced timeout it retried and refunded the customer *three times* while telling them it had failed — and worldbench caught it. Testing this before launch also flushed out a genuine worldbench bug (faulted writes weren't being mirrored to out-of-process readers), now fixed.
 
 ### 9. Polish and docs ✅
 **What:** Clear error messages on bad world files, a second example world, and user docs.

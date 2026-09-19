@@ -32,6 +32,14 @@ Release steps still to do — all need the new account and/or an explicit go:
 3. Optional: a real asciinema/GIF of `uv run pytest examples/shop -k survives --faults` for
    the README (can't be generated headlessly here; do on the user's machine).
 
+Pre-launch validation (this session): drove the shop world with a REAL second framework, the
+OpenAI Agents SDK, over HTTP (`examples/shop/test_openai_agents.py`, opt-in, `openai-agents`
+extra) — clean refund fault-free; under a forced timeout it wrote 3 phantom refunds while
+reporting failure, and worldbench caught them. That surfaced a genuine bug: the state-file
+mirror only ran on success, so faulted writes (write-then-timeout) were under-reported over
+HTTP — fixed (mirror on every attempt) and regression-tested
+(`test_faulted_write_is_mirrored_to_state_file`). Also documented the enum-in-flow-YAML gotcha.
+
 Done this session (local): `run_agent` helper in `worldbench.integrations.pydantic_ai`
 (`toolset`/`agent`/`run_agent`, accepts in-process `mcp_server` OR the `mcp_url` string);
 `pydantic-ai` extra; dogfooded in `examples/shop` + `docs/TESTING.md` + README; version bumped

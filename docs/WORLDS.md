@@ -45,6 +45,10 @@ faults:                         # optional; see below
 
 A field named `id` is auto-assigned sequential ids (`"1"`, `"2"`, …); don't generate it.
 
+> **YAML gotcha:** write records in **block style** when a field uses `enum[a, b, c]` — the
+> commas/brackets break YAML *flow* style (`{ status: enum[a, b, c] }` is a parse error). The
+> examples use block style; follow them.
+
 ## Operations
 
 Every operation becomes one MCP tool named after the operation. Built-in kinds:

@@ -220,9 +220,14 @@ def _make_tool_fn(
                     raise ToolError(f"{exc.kind}: {exc}") from exc
         except ToolError as exc:
             _record_trace(recorder, op.name, kwargs, decision, world, ok=False, error=str(exc))
+            # A failed call may still have mutated the world (a timeout runs the op, then
+            # fails), so mirror state on the error path too — else the snapshot under-reports
+            # exactly the write-then-timeout bug worldbench exists to catch.
+            _mirror_state(world, state_file)
             raise
         _record_trace(recorder, op.name, kwargs, decision, world, ok=True, result=result)
-        _record(op.name, kwargs, result, world, state_file)
+        print(f"[worldbench] {op.name}({kwargs}) -> {result}", file=sys.stderr)
+        _mirror_state(world, state_file)
         return result
 
     def fn(**kwargs: Any) -> Any:
@@ -236,10 +241,9 @@ def _make_tool_fn(
     return fn
 
 
-def _record(
-    tool: str, args: dict[str, Any], result: Any, world: World, state_file: str | None
-) -> None:
-    print(f"[worldbench] {tool}({args}) -> {result}", file=sys.stderr)
+def _mirror_state(world: World, state_file: str | None) -> None:
+    """Mirror the whole world to a JSON file so an out-of-process client can read end state.
+    Called after every attempt (success or fault), since a faulted write still mutates."""
     if state_file:
         Path(state_file).write_text(json.dumps(world.snapshot(), indent=2))
 

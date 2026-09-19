@@ -10,6 +10,7 @@ end state from pytest, twenty runs at a time.
 > HTTP), inject faults, and assert on state from pytest across N seeded runs.
 > **Guides:** [write a world](docs/WORLDS.md) · [test an agent](docs/TESTING.md) ·
 > examples: [`examples/shop`](examples/shop) (refund agent), [`examples/bank`](examples/bank).
+> Validated against **Pydantic AI** and the **OpenAI Agents SDK** (any MCP framework works).
 
 ## The problem
 

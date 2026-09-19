@@ -1,6 +1,7 @@
 """Fault layer tests (milestone 4): clock, profile parsing, injector determinism and error
 timing, and the headline double-refund-on-timeout demo."""
 
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -166,6 +167,21 @@ async def test_timeout_causes_double_refund():
                 )
     # Each timed-out call executed server-side: the refund was written twice.
     assert len(world.refunds.where(order_id=order.id)) == 2
+
+
+async def test_faulted_write_is_mirrored_to_state_file(tmp_path):
+    """A timeout runs the op then fails; the out-of-process state mirror must still show the
+    write, or an HTTP client would miss the write-then-timeout bug."""
+    world = World.load(SHOP)
+    order = world.orders.pick(status="delivered")
+    faults = FaultProfile.from_dict({"payments.issue_refund": {"errors": {"timeout": 1.0}}})
+    state_file = tmp_path / "state.json"
+    server = build_server(world, faults=faults, state_file=str(state_file))
+    async with FastMCPClient(server) as client:
+        with pytest.raises(Exception, match="timeout"):
+            await client.call_tool("issue_refund", {"order_id": order.id, "amount": order.total})
+    snapshot = json.loads(state_file.read_text())
+    assert any(r["order_id"] == order.id for r in snapshot["refunds"].values())
 
 
 async def test_no_faults_single_refund():

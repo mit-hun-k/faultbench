@@ -26,6 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 pydantic-ai = ["pydantic-ai>=0.4"]
+openai-agents = ["openai-agents>=0.2"]
 examples = ["pydantic-ai>=0.4"]
 
 [project.entry-points.pytest11]
