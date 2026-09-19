@@ -42,11 +42,12 @@ Each piece: what it is, why we need it, and whether it's done.
 **Why:** Agents are random; a single pass/fail lies. The line "17/20 passed, 3 duplicate refunds after a timeout" *is* the product. Everything before this exists to make that line possible.
 **Built:** 19 Sep. Running the refund test 6 times under a 20% timeout printed `5/6 passed (83%)` and, for the failing run, the trace `get_order → create_return → issue_refund!timeout → issue_refund` — the double refund, caught and explained. `min_pass_rate` turns the rate into a CI pass/fail.
 
-### 7. Rules and smarter faults 🔨 now
-**What:** Business rules in Python ("returns only within 30 days"), dates and enums, and faults that depend on conditions ("orders younger than 2 hours aren't found yet").
+### 7. Rules and smarter faults ✅
+**What:** Business rules in Python ("returns only within 30 days"), dates and enums, and faults that depend on conditions ("orders younger than 2 hours aren't found yet") plus rate limits.
 **Why:** Real systems have rules and real failures are conditional. Without this the fake world is too simple to catch interesting bugs.
+**Built:** 19 Sep. The fake clock now drives real rules: a delivered order is refundable only within 30 days (move the clock forward and it's refused), a just-placed order isn't visible yet (sync lag), and too many calls in a window get rate-limited — all deterministic and testable without waiting.
 
-### 8. Second framework ⬜
+### 8. Second framework 🔨 now
 **What:** Serve the world over HTTP, a `worldbench serve` command, and prove an agent from a *different* framework passes the same tests.
 **Why:** "Works with any framework" is a claim until two frameworks share one world. Then it's a fact for the README.
 

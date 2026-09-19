@@ -1,5 +1,5 @@
 """pytest plugin: world/faults/clock/mcp_server/trace fixtures, markers, and N-run pass
-rate. Milestones 5–6.
+rate. Milestones 5–7.
 
 Registered via the `pytest11` entry point in pyproject.toml, so it loads automatically once
 worldbench is installed. A test declares what it needs with markers and receives ready-built
@@ -126,15 +126,15 @@ def trace(_recorder: Recorder) -> Trace:
 
 
 @pytest.fixture
-def mcp_server(world: World, faults: FaultProfile, run_index: int, _recorder: Recorder):
-    """An in-process MCP server built from `world` (+ `faults`, this run's `run_index`, and a
-    recorder feeding the `trace` fixture). It shares the `world` object, so a test can drive
-    the tools and then assert on `world` directly.
-
-    The `clock` is intentionally NOT threaded in yet: doing so activates time-dependent rules
-    (the shop's 30-day return window) while the seed dates and the clock's 'now' are not
-    aligned. That alignment and clock-driven faults land in milestone 7."""
-    return build_server(world, clock=None, faults=faults, run_index=run_index, recorder=_recorder)
+def mcp_server(
+    world: World, faults: FaultProfile, clock: FakeClock, run_index: int, _recorder: Recorder
+):
+    """An in-process MCP server built from `world` (+ `faults`, `clock`, this run's
+    `run_index`, and a recorder feeding the `trace` fixture). It shares the `world` object and
+    the `clock`, so a test can drive the tools, move the clock, and then assert on `world`
+    directly. Seed dates are aligned with the clock's default 'now' (milestone 7), so
+    delivered orders are eligible for return unless the test moves the clock forward."""
+    return build_server(world, clock=clock, faults=faults, run_index=run_index, recorder=_recorder)
 
 
 # --- N runs + pass rate ---------------------------------------------------------

@@ -39,4 +39,7 @@ faults:
     latency_ms: [200, 3000]
     errors: { timeout: 0.10, http_500: 0.02 }
   orders.get_order:
-    errors: { not_found_if_newer_than: 2h }
+    errors: { not_found_if_newer_than: 2h }   # an order placed <2h ago isn't visible (sync lag)
+  # Rate limiting is supported too, e.g. cap refunds:
+  # payments.issue_refund:
+  #   rate_limit: { calls: 5, per_seconds: 60 }   # 6th call within 60s -> http_429

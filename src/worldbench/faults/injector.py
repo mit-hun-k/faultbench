@@ -1,7 +1,10 @@
-"""Fault injector: wraps an operation call and applies latency + errors. Milestone 4.
+"""Fault injector: wraps an operation call and applies latency + errors. Milestones 4, 7.
 
 Determinism: all randomness comes from `Random(f"{seed}:{run_index}")`, so the same profile,
-seed, and run index produce the same fault sequence across processes.
+seed, and run index produce the same fault sequence across processes. Conditional faults and
+rate limits are deterministic (data- and clock-driven, no RNG).
+
+Order of checks per call: latency → conditional not-found → rate limit → probabilistic error.
 
 Error timing models real failures:
   - `timeout`: the request reached the server and RAN (its side effect happened), but the
@@ -10,6 +13,12 @@ Error timing models real failures:
   - `http_500` / `http_429` / `not_found`: the request is rejected BEFORE running, so there
     is no side effect.
   - `empty_result` / `malformed_json`: the response is corrupted; the op does NOT run.
+
+Conditional (milestone 7):
+  - `not_found_if_newer_than: 2h`: a read of a record whose timestamp is newer than 2h before
+    `clock.now()` returns not_found — models sync lag (recent writes not yet visible).
+  - `rate_limit: {calls, per_seconds}`: after `calls` calls within the window, returns
+    http_429 until the window rolls forward (measured on the clock).
 """
 
 from __future__ import annotations
@@ -18,14 +27,10 @@ import random
 import sys
 import time
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 from .profile import FaultProfile, FaultRule
-
-# error kinds that reject the call before the operation runs (no side effect)
-_REJECT_BEFORE = frozenset({"http_500", "http_429", "not_found"})
-# error kinds that corrupt the response without running the operation
-_CORRUPT_RESPONSE = frozenset({"empty_result", "malformed_json"})
 
 
 class FaultTimeout(Exception):
@@ -58,6 +63,7 @@ class Injector:
         self._sleep = sleep
         self._timeout_seconds = timeout_seconds
         self._on_event = on_event
+        self._rl_calls: dict[str, list[float]] = {}  # service.op -> recent call times (rate limit)
 
     def call(
         self,
@@ -65,15 +71,19 @@ class Injector:
         op: str,
         fn: Callable[[], Any],
         on_decision: Callable[[str | None, float], None] | None = None,
+        record_time: datetime | None = None,
     ) -> Any:
         """Run `fn` under the fault rule for `service.op`.
 
         `on_decision(fault_kind, latency_ms)` is called once the fault is decided, before the
         operation runs — so a recorder can log what was injected even if the call then fails.
+        `record_time` is the target record's timestamp, used by conditional not-found rules.
         """
         rule = self.profile.resolve(service, op)
         latency_ms = self._apply_latency(rule)
-        kind = self._roll(rule.errors)
+        kind = self._conditional(rule, record_time) or self._rate_limited(service, op, rule)
+        if kind is None:
+            kind = self._roll(rule.errors)
         if on_decision:
             on_decision(kind, latency_ms)
         self._emit(service, op, kind)
@@ -91,6 +101,29 @@ class Injector:
         raise FaultError(kind, f"{op}: injected {kind}")
 
     # --- internals ---------------------------------------------------------------
+    def _conditional(self, rule: FaultRule, record_time: datetime | None) -> str | None:
+        """Return 'not_found' when the record is newer than the sync-lag window."""
+        window = rule.conditional.get("not_found_if_newer_than")
+        if window is None or record_time is None or self.clock is None:
+            return None
+        age = (self.clock.now() - record_time).total_seconds()
+        return "not_found" if age < window else None
+
+    def _rate_limited(self, service: str, op: str, rule: FaultRule) -> str | None:
+        """Return 'http_429' once more than `calls` calls happen within the window."""
+        limit = rule.rate_limit
+        if limit is None:
+            return None
+        now = self.clock.now().timestamp() if self.clock is not None else time.monotonic()
+        key = f"{service}.{op}"
+        recent = [t for t in self._rl_calls.get(key, []) if now - t < limit.per_seconds]
+        if len(recent) >= limit.calls:
+            self._rl_calls[key] = recent
+            return "http_429"
+        recent.append(now)
+        self._rl_calls[key] = recent
+        return None
+
     def _apply_latency(self, rule: FaultRule) -> float:
         if not rule.latency_ms:
             return 0.0

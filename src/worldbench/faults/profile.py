@@ -35,10 +35,16 @@ def parse_duration(text: str) -> float:
     return float(m.group(1)) * _UNIT_SECONDS[m.group(2)]
 
 
+class RateLimit(BaseModel):
+    calls: int
+    per_seconds: float
+
+
 class FaultRule(BaseModel):
     latency_ms: tuple[int, int] | None = None
     errors: dict[str, float] = Field(default_factory=dict)  # kind -> probability
-    conditional: dict[str, float] = Field(default_factory=dict)  # cond -> seconds (unenforced)
+    conditional: dict[str, float] = Field(default_factory=dict)  # cond -> seconds
+    rate_limit: RateLimit | None = None
 
     @classmethod
     def from_body(cls, body: dict) -> FaultRule:
@@ -62,7 +68,10 @@ class FaultRule(BaseModel):
         total = sum(errors.values())
         if total > 1.0 + 1e-9:
             raise ValueError(f"error probabilities sum to {total} > 1.0")
-        return cls(latency_ms=latency, errors=errors, conditional=conditional)
+        rate_limit = RateLimit(**body["rate_limit"]) if body.get("rate_limit") else None
+        return cls(
+            latency_ms=latency, errors=errors, conditional=conditional, rate_limit=rate_limit
+        )
 
 
 class FaultProfile(BaseModel):
@@ -88,6 +97,7 @@ class FaultProfile(BaseModel):
             latency_ms=specific.latency_ms or default.latency_ms,
             errors={**default.errors, **specific.errors},
             conditional={**default.conditional, **specific.conditional},
+            rate_limit=specific.rate_limit or default.rate_limit,
         )
 
     def is_empty(self) -> bool:

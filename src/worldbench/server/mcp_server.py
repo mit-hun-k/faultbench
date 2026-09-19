@@ -22,7 +22,7 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 
-from ..faults import FaultError, FaultProfile, FaultTimeout, Injector
+from ..faults import FakeClock, FaultError, FaultProfile, FaultTimeout, Injector
 from ..trace import Recorder
 from ..world import OperationSpec, World
 from .operations import resolve_handler, run_builtin
@@ -83,8 +83,11 @@ def serve_stdio(
     faults: FaultProfile | None = None,
     run_index: int = 0,
 ) -> None:
-    """Load a world file and serve it over stdio (blocking)."""
+    """Load a world file and serve it over stdio (blocking). Uses a FakeClock at its default
+    'now' unless one is given, so time-dependent rules (return window, sync lag) are active."""
     world = World.load(world_path)
+    if clock is None:
+        clock = FakeClock()
     build_server(world, clock=clock, state_file=state_file, faults=faults, run_index=run_index).run(
         "stdio"
     )
@@ -181,7 +184,11 @@ def _make_tool_fn(
             else:
                 try:
                     result = injector.call(
-                        service_name, op.name, lambda: do(kwargs), on_decision=on_decision
+                        service_name,
+                        op.name,
+                        lambda: do(kwargs),
+                        on_decision=on_decision,
+                        record_time=_record_time(world, op, kwargs),
                     )
                 except FaultTimeout as exc:
                     # The op already ran; the client "timed out". Surface as a tool error so
@@ -213,6 +220,23 @@ def _record(
     print(f"[worldbench] {tool}({args}) -> {result}", file=sys.stderr)
     if state_file:
         Path(state_file).write_text(json.dumps(world.snapshot(), indent=2))
+
+
+def _record_time(world: World, op: OperationSpec, kwargs: dict[str, Any]):
+    """The target record's timestamp (first datetime field), for conditional not-found rules.
+    Only defined for single-record ops that name an existing record; else None."""
+    if op.kind not in ("get", "update", "delete") or "id" not in kwargs:
+        return None
+    fields = world.table(op.record).record_type.fields
+    dt_field = next((n for n, ft in fields.items() if ft.kind == "datetime"), None)
+    if dt_field is None:
+        return None
+    record = world.table(op.record).get(kwargs["id"])
+    if record is None or record.get(dt_field) is None:
+        return None
+    from datetime import datetime  # noqa: PLC0415
+
+    return datetime.fromisoformat(record[dt_field])
 
 
 def _record_trace(

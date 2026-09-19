@@ -13,7 +13,7 @@ from __future__ import annotations
 import csv
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -24,9 +24,13 @@ from .schema import FieldType, RecordType
 if TYPE_CHECKING:
     from .engine import Table, World
 
-# Absolute, wall-clock-independent window for generated datetimes.
-_DT_START = datetime(2020, 1, 1)
-_DT_END = datetime(2025, 1, 1)
+# The world's reference "now": a fixed anchor so seeding is wall-clock-independent, and so a
+# FakeClock at this instant sees the data as recent. MUST equal faults.clock.DEFAULT_NOW
+# (guarded by a test) so time-dependent rules (e.g. a 30-day return window) have eligible
+# records at the default clock. Generated datetimes fall in the 20 days ending at the anchor.
+WORLD_EPOCH = datetime(2025, 6, 1)
+_DT_END = WORLD_EPOCH
+_DT_START = WORLD_EPOCH - timedelta(days=20)
 
 
 def seed_table(table: Table, record_type: RecordType, count: int, world: World) -> None:
