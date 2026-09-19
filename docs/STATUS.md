@@ -17,7 +17,7 @@ Plain-language view for Mithun of what each milestone is and why: `docs/JOURNEY.
 | 7 | custom ops, enum/datetime, conditional faults, rate limits | done | 2026-09-19; sync-lag + eligibility + rate-limit tests pass |
 | 8 | HTTP transport; `worldbench serve`; second framework | done | 2026-09-19; reference mcp.Client drives the world over HTTP |
 | 9 | hardening, docs, second example world | done | 2026-09-19; WORLDS.md + TESTING.md + examples/bank + friendly errors |
-| 10 | README demo, GIF, CI, PyPI 0.1.0 | wip | 2026-09-19; helper + real README demo + CI file + wheel verified; publish/push pending |
+| 10 | README demo, GIF, CI, PyPI 0.1.0 | wip | 2026-09-19; pushed to private github.com/mit-hun-k/worldbench, CI green; PyPI publish still pending |
 | 11 | launch: HN, MCP/Pydantic AI communities | todo | 20 users, 5 external issues |
 | 12 | triage, roadmap (v0.2 replay, v0.3 scenario format) | todo | |
 
