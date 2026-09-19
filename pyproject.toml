@@ -1,6 +1,6 @@
 [project]
 name = "faultbench"
-version = "0.1.0"
+version = "0.1.1"
 description = "Fake, stateful worlds with fault injection for testing tool-using AI agents. Exposed over MCP, asserted from pytest."
 readme = "README.md"
 license = "Apache-2.0"
@@ -23,6 +23,11 @@ dependencies = [
   "mcp>=2.2",
   "faker>=25.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mit-hun-k/faultbench"
+Repository = "https://github.com/mit-hun-k/faultbench"
+Issues = "https://github.com/mit-hun-k/faultbench/issues"
 
 [project.optional-dependencies]
 pydantic-ai = ["pydantic-ai>=2.0"]

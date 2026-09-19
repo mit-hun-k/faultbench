@@ -1,8 +1,9 @@
 # Status
 
-Active milestone: **Weekend 10 (release 0.1.0)** — local prep DONE; remote push + PyPI publish
-are held for the user (new GitHub account `mit-hun-k` token, and explicit go on the irreversible
-publish). Weekends 1–9 done.
+Active milestone: **Weekend 11 (launch)** is next. Weekends 1–10 done — `faultbench 0.1.0` is
+published on PyPI and the repo (github.com/mit-hun-k/faultbench) is public. Renamed from
+`worldbench` (that PyPI name was taken). 0.1.1 (adds project URLs) is prepared, pending a
+republish once a fresh PyPI token exists.
 Plain-language view for Mithun of what each milestone is and why: `docs/JOURNEY.md` (keep in sync).
 
 | # | Milestone | State | Notes |
@@ -17,7 +18,7 @@ Plain-language view for Mithun of what each milestone is and why: `docs/JOURNEY.
 | 7 | custom ops, enum/datetime, conditional faults, rate limits | done | 2026-09-19; sync-lag + eligibility + rate-limit tests pass |
 | 8 | HTTP transport; `faultbench serve`; second framework | done | 2026-09-19; reference mcp.Client drives the world over HTTP |
 | 9 | hardening, docs, second example world | done | 2026-09-19; WORLDS.md + TESTING.md + examples/bank + friendly errors |
-| 10 | README demo, GIF, CI, PyPI 0.1.0 | wip | 2026-09-19; pushed to private github.com/mit-hun-k/faultbench, CI green; PyPI publish still pending |
+| 10 | README demo, GIF, CI, PyPI 0.1.0 | done | 2026-09-20; faultbench 0.1.0 on PyPI, repo public, CI green (GIF still optional) |
 | 11 | launch: HN, MCP/Pydantic AI communities | todo | 20 users, 5 external issues |
 | 12 | triage, roadmap (v0.2 replay, v0.3 scenario format) | todo | |
 

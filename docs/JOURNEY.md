@@ -60,12 +60,12 @@ Each piece: what it is, why we need it, and whether it's done.
 world (a tiny bank) that a reader can copy from. Bad world files now fail with a message that
 names the problem instead of a stack trace.
 
-### 10. Release 0.1.0 🔨 now
-**What:** README that opens with the 20-run demo, a one-minute recording, CI, and the package on PyPI.
+### 10. Release 0.1.0 ✅
+**What:** README that opens with the 20-run demo, CI, and the package on PyPI.
 **Why:** `pip install faultbench` working on a stranger's machine is the difference between a repo and a project.
-**So far (19 Sep):** a one-line helper so the first test is copy-paste (`run_agent(model, prompt, mcp=...)`), the README demo is now the real runnable one, CI is written, and the 0.1.0 wheel builds and installs clean in a fresh environment. Still to do, and held for you: pushing to GitHub (new account) and publishing to PyPI — the irreversible steps.
+**Built:** 20 Sep. `pip install faultbench` works from PyPI, the repo is public at github.com/mit-hun-k/faultbench, and CI is green. Renamed from `worldbench` (that name was already taken on PyPI — caught at publish time). Only optional extra left: a demo GIF.
 
-### 11. Launch ⬜
+### 11. Launch 🔨 now
 **What:** Show HN, the MCP and Pydantic AI communities, a short post telling the double-refund story.
 **Why:** Open source only works if people find it. The story, not the link, makes them try it.
 **Done when:** 20 people tried it; 5 issues you didn't write.
