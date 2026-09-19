@@ -22,10 +22,10 @@ from typing import Any
 try:
     from pydantic_ai import Agent
     from pydantic_ai.mcp import FastMCPClient, MCPToolset
-except ImportError as exc:  # pragma: no cover - exercised only without the extra
+except ImportError as exc:  # pragma: no cover - exercised only without a suitable version
     raise ImportError(
-        "worldbench.integrations.pydantic_ai needs Pydantic AI. "
-        "Install it with: pip install 'worldbench[pydantic-ai]'"
+        "worldbench.integrations.pydantic_ai needs a recent Pydantic AI (v2+, tested with "
+        "2.45+). Install it with: pip install 'worldbench[pydantic-ai]'"
     ) from exc
 
 

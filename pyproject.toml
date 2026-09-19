@@ -20,14 +20,14 @@ classifiers = [
 dependencies = [
   "pydantic>=2.7",
   "pyyaml>=6.0",
-  "mcp>=2",
+  "mcp>=2.2",
   "faker>=25.0",
 ]
 
 [project.optional-dependencies]
-pydantic-ai = ["pydantic-ai>=0.4"]
+pydantic-ai = ["pydantic-ai>=2.0"]
 openai-agents = ["openai-agents>=0.2"]
-examples = ["pydantic-ai>=0.4"]
+examples = ["pydantic-ai>=2.0"]
 
 [project.entry-points.pytest11]
 worldbench = "worldbench.pytest_plugin"

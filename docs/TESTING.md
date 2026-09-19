@@ -87,6 +87,9 @@ async def test_return_window(world, mcp_server, clock):
 
 ## Notes / limits
 
+- **Async tests** (agent runs are async) need `pytest-asyncio`: `pip install pytest-asyncio` and
+  set `asyncio_mode = "auto"` under `[tool.pytest.ini_options]` (or `[pytest]` in `pytest.ini`).
+  Sync tests that only use `world`/`clock`/`faults` need nothing extra.
 - `uv run pytest` needs no API key for the plugin itself; only tests that call a real model do.
   Keep those in an example dir and skip when the key is absent.
 - `--runs` is global (applies to every test using `mcp_server`). Combining `@runs` with other
