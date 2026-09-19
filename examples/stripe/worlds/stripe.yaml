@@ -1,0 +1,69 @@
+name: stripe
+seed: 11
+services:
+  core:
+    records:
+      customers:
+        id: str
+        email: str
+        name: str
+        created: datetime
+    seed:
+      count: 5
+    operations:
+      get_customer:    { kind: get,    record: customers }
+      create_customer: { kind: create, record: customers }
+
+  payments:
+    records:
+      payment_intents:
+        id: str
+        customer_id: ref[core.customers]
+        amount: int
+        currency: enum[usd, eur, gbp]
+        status: enum[requires_confirmation, succeeded, canceled]
+        created: datetime
+      charges:
+        id: str
+        payment_intent_id: ref[payments.payment_intents]
+        amount: int
+        status: enum[pending, succeeded, failed]
+        created: datetime
+      refunds:
+        id: str
+        charge_id: ref[payments.charges]
+        amount: int
+        reason: enum[requested_by_customer, duplicate, fraudulent]
+        status: enum[pending, succeeded]
+        created: datetime
+    operations:
+      create_payment_intent:  { kind: create, record: payment_intents }
+      get_payment_intent:     { kind: get,    record: payment_intents }
+      confirm_payment_intent: { kind: custom, handler: stripe_rules.confirm_payment_intent }
+      create_refund:          { kind: custom, handler: stripe_rules.create_refund }
+      list_refunds:           { kind: list,   record: refunds, filter: [charge_id] }
+
+  billing:
+    records:
+      invoices:
+        id: str
+        customer_id: ref[core.customers]
+        total: int
+        status: enum[draft, open, paid, void]
+        created: datetime
+      invoice_line_items:
+        id: str
+        invoice_id: ref[billing.invoices]
+        description: str
+        amount: int
+        quantity: int
+    operations:
+      create_invoice:  { kind: custom, handler: stripe_rules.create_invoice }
+      get_invoice:     { kind: get,    record: invoices }
+      list_line_items: { kind: list,   record: invoice_line_items, filter: [invoice_id] }
+
+faults:
+  default:
+    latency_ms: [20, 80]
+  payments.create_refund:
+    errors: { timeout: 0.10 }

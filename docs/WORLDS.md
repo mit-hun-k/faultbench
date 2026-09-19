@@ -67,6 +67,20 @@ That's fine for smoke tests and fault scenarios; if you need realistic or relate
 set them in a custom handler or in your test (`world.<record>.update(id, ...)`) before the run.
 Per-field generation controls and seeding from CSV/JSON are not in 0.1.
 
+## What you can and can't model
+
+worldbench records are **flat** — fields are scalars, `enum`, `datetime`, or `ref`. There are
+**no nested objects or array fields**. That shapes how you model real APIs:
+
+- **One-to-many / arrays:** use a related record type + a `ref` (e.g. an `invoices` record and a
+  separate `invoice_line_items` record with `invoice_id: ref[...]`). A custom op can accept an
+  array argument (`lines: list`) and flatten it into the child table (see `examples/stripe`).
+  Note a `get` returns the parent alone — children are a separate `list` op, not inline.
+- **Anything non-CRUD** (state machines, validation, computed values, multi-record writes) goes
+  in a `custom` handler — that's the intended escape hatch.
+- **Not modeled in 0.1:** pagination/cursors, non-equality filters, auth, webhooks, per-request
+  idempotency. Generated seed values are type-correct but not domain-aware.
+
 ## Operations
 
 Every operation becomes one MCP tool named after the operation. Built-in kinds:

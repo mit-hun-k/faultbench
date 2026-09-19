@@ -64,6 +64,22 @@ The timeout fired *after* the refund was written, the agent retried, and the cus
 refunded twice — the production bug you couldn't trigger on the real payments API, now a red
 test with the trace that explains it.
 
+## What it can and can't model
+worldbench models services as **flat records** (fields: `str/int/float/bool/datetime/enum/ref`)
+with built-in CRUD plus **custom Python operations** for anything else.
+
+- **Fits well:** entities with enums and `ref` relationships; CRUD and list-by-field; business
+  rules, state machines, and multi-record writes as custom handlers; array *inputs* via a custom
+  op that flattens into a related record type; money as integer minor-units. (See
+  [`examples/stripe`](examples/stripe) — a Stripe-style payments API with partial-refund rules.)
+- **Caveat:** records are flat — there are **no nested objects or array fields**. Model a
+  one-to-many as a related record type + a `ref` (invoice ← line items); a GET returns the
+  parent without children inline, so if your agent's correctness depends on a nested *response*
+  shape, the fake's shape differs.
+- **Not in 0.1:** pagination/cursors, non-equality filters, auth, webhooks, per-request
+  idempotency (that last is a bug worldbench helps you *catch*, not prevent). Generated seed
+  values are type-correct but not domain-aware — set realistic values in a handler or your test.
+
 ## Security
 A world file can name Python to import and run (custom handlers, `handler: module.func`), so
 loading or serving one executes that code. Only use world files you trust, like any script.
