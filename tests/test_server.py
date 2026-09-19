@@ -108,6 +108,25 @@ def test_run_builtin_get_missing_raises(world):
         run_builtin("get", world, "orders", {"id": "nope"})
 
 
+def test_run_builtin_rejects_bad_enum(world):
+    with pytest.raises(ValueError, match="must be one of"):
+        run_builtin("update", world, "orders", {"id": "1", "status": "banana"})
+    # a valid enum value is accepted
+    assert (
+        run_builtin("update", world, "orders", {"id": "1", "status": "returned"})["status"]
+        == "returned"
+    )
+
+
+async def test_enum_param_advertises_its_values():
+    mini = World.load(Path(__file__).parent / "worlds/mini.yaml")
+    async with FastMCPClient(build_server(mini)) as client:
+        tools = {t.name: t for t in await client.list_tools()}
+        status = tools["sell_widget"].input_schema["properties"]["status"]
+    text = json.dumps(status)
+    assert '"new"' in text and '"sold"' in text  # the enum members are in the schema
+
+
 def test_resolve_handler_ok_and_errors():
     fn = resolve_handler("worldbench.server.operations.run_builtin")
     assert callable(fn)

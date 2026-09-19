@@ -88,7 +88,9 @@ async def test_timeout_still_wrote_the_refund(world, mcp_server, trace):
     with pytest.raises(Exception, match="timeout"):
         await mcp_server.call_tool("issue_refund", {"order_id": order.id, "amount": order.total})
     assert [e["fault"] for e in trace.faults()] == ["timeout"]
-    assert len(world.refunds.where(order_id=order.id)) == 1   # the write happened, then it "timed out"
+    assert (
+        len(world.refunds.where(order_id=order.id)) == 1
+    )  # the write happened, then it "timed out"
 ```
 
 `trace` gives `count(tool)`, `calls_to(tool)`, `faults()`, `failures()`; the `faults` fixture

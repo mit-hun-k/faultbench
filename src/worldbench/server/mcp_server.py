@@ -17,7 +17,7 @@ import inspect
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
@@ -160,17 +160,25 @@ def _params_for(world: World, op: OperationSpec, clock: Any) -> list[inspect.Par
 
     fields = world.table(op.record).record_type.fields
     if op.kind in ("get", "delete"):
-        return [param("id", _PYTYPE[fields["id"].kind], True)]
+        return [param("id", _pytype(fields["id"]), True)]
     if op.kind == "update":
-        out = [param("id", _PYTYPE[fields["id"].kind], True)]
-        out += [param(n, _PYTYPE[ft.kind], False) for n, ft in fields.items() if n != "id"]
+        out = [param("id", _pytype(fields["id"]), True)]
+        out += [param(n, _pytype(ft), False) for n, ft in fields.items() if n != "id"]
         return out
     if op.kind == "create":
-        return [param(n, _PYTYPE[ft.kind], False) for n, ft in fields.items() if n != "id"]
+        return [param(n, _pytype(ft), False) for n, ft in fields.items() if n != "id"]
     if op.kind == "list":
         names = op.filter or []
-        return [param(n, _PYTYPE[fields[n].kind], False) for n in names]
+        return [param(n, _pytype(fields[n]), False) for n in names]
     raise ValueError(f"unsupported operation kind {op.kind!r}")
+
+
+def _pytype(ft):
+    """The Python type a field advertises in the tool schema. Enums become a Literal of their
+    members so the schema constrains the value to the allowed set."""
+    if ft.kind == "enum":
+        return Literal[tuple(ft.enum_members)]
+    return _PYTYPE[ft.kind]
 
 
 def _make_tool_fn(

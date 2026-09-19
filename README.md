@@ -64,6 +64,10 @@ The timeout fired *after* the refund was written, the agent retried, and the cus
 refunded twice — the production bug you couldn't trigger on the real payments API, now a red
 test with the trace that explains it.
 
+## Security
+A world file can name Python to import and run (custom handlers, `handler: module.func`), so
+loading or serving one executes that code. Only use world files you trust, like any script.
+
 ## Not in scope
 Simulated users, LLM judges, dashboards. Use LangWatch Scenario / DeepEval for users and your own
 judge for scoring; worldbench is the environment.

@@ -6,6 +6,10 @@ every run.
 
 See `examples/shop/worlds/shop.yaml` and `examples/bank/worlds/bank.yaml` for full examples.
 
+> **Security:** a world file can name Python to import and run (`handler: module.func`), so
+> loading or serving one executes that code. Only use world files you trust, as you would any
+> Python script.
+
 ## Skeleton
 
 ```yaml

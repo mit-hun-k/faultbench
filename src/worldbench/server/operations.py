@@ -43,10 +43,20 @@ def run_builtin(kind: str, world: World, table_name: str, args: dict[str, Any]) 
         return [r.to_dict() for r in table.where(**filters)]
     if kind == "create":
         fields = {k: v for k, v in args.items() if v is not None}
+        _check_enums(table, fields)
         return table.insert(**fields).to_dict()
     if kind == "update":
         fields = {k: v for k, v in args.items() if k != "id" and v is not None}
+        _check_enums(table, fields)
         return table.update(args["id"], **fields).to_dict()
     if kind == "delete":
         return {"id": str(args["id"]), "deleted": table.delete(args["id"])}
     raise ValueError(f"unknown built-in operation kind {kind!r}")
+
+
+def _check_enums(table, fields: dict[str, Any]) -> None:
+    """Reject writes that set an enum field to a value outside its members."""
+    for name, value in fields.items():
+        ft = table.record_type.fields.get(name)
+        if ft is not None and ft.kind == "enum" and value not in ft.enum_members:
+            raise ValueError(f"{name} must be one of {list(ft.enum_members)}, got {value!r}")
