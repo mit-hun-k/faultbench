@@ -127,11 +127,24 @@ def parse_world(data: dict) -> WorldSpec:
     """Build a validated WorldSpec from a raw parsed-YAML dict."""
     if "name" not in data:
         raise ValueError("world file needs a top-level 'name'")
+    services_raw = data.get("services") or {}
+    if not isinstance(services_raw, dict):
+        raise ValueError("'services' must be a mapping of service name -> service")
     services: dict[str, ServiceSpec] = {}
-    for sname, sbody in (data.get("services") or {}).items():
+    for sname, sbody in services_raw.items():
+        if not isinstance(sbody, dict):
+            raise ValueError(f"service {sname!r} must be a mapping")
+        records_raw = sbody.get("records") or {}
+        if not isinstance(records_raw, dict):
+            raise ValueError(f"service {sname!r}: 'records' must be a mapping")
         records: dict[str, RecordType] = {}
-        for rname, rfields in (sbody.get("records") or {}).items():
-            fields = {fn: FieldType.parse(ft) for fn, ft in rfields.items()}
+        for rname, rfields in records_raw.items():
+            if not isinstance(rfields, dict):
+                raise ValueError(f"record {rname!r} must be a mapping of field -> type")
+            try:
+                fields = {fn: FieldType.parse(ft) for fn, ft in rfields.items()}
+            except ValueError as exc:
+                raise ValueError(f"record {rname!r}: {exc}") from exc
             records[rname] = RecordType(name=rname, fields=fields)
         seed = SeedSpec(**sbody["seed"]) if "seed" in sbody else None
         operations = {

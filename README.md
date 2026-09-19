@@ -6,7 +6,10 @@ Declare your services in a YAML file. worldbench serves them as MCP tools your a
 makes them slow or broken on purpose, records every call, and lets you assert on the world's
 end state from pytest, twenty runs at a time.
 
-> Status: pre-alpha scaffold. Nothing works yet. Follow `docs/STATUS.md`.
+> Status: pre-alpha, but it works end to end. Write a world, serve it over MCP (stdio or
+> HTTP), inject faults, and assert on state from pytest across N seeded runs.
+> **Guides:** [write a world](docs/WORLDS.md) · [test an agent](docs/TESTING.md) ·
+> examples: [`examples/shop`](examples/shop) (refund agent), [`examples/bank`](examples/bank).
 
 ## The problem
 
@@ -14,7 +17,7 @@ Your support agent handles "return my order and refund me." It works when you te
 In production the refund API times out once, the agent retries, and a customer is refunded twice.
 You can't make the real payments API time out on command, so you never tested it.
 
-## What it will look like
+## What it looks like
 
 ```yaml
 # world.yaml
@@ -48,11 +51,21 @@ FAILED run 04: expected 1 refund, got 2
 Simulated users, LLM judges, dashboards. Use LangWatch Scenario / DeepEval for users and your own
 judge for scoring; worldbench is the environment.
 
+## Quickstart
+
+    uv sync --all-extras
+    uv run pytest                                             # the harness test suite (no API key)
+    uv run worldbench serve examples/shop/worlds/shop.yaml    # serve a world over MCP (stdio)
+    uv run worldbench serve examples/bank/worlds/bank.yaml --http   # ...or over HTTP
+
+Then write your own: [docs/WORLDS.md](docs/WORLDS.md) and [docs/TESTING.md](docs/TESTING.md).
+
 ## Development
 See `CLAUDE.md` for the session protocol and `docs/` for architecture, decisions and status.
 
     uv sync --all-extras
     uv run pytest
+    uv run pytest examples/shop     # the example agent test (needs a model API key)
 
 ## License
 Apache 2.0

@@ -208,7 +208,16 @@ class World:
     @classmethod
     def load(cls, path: str | Path) -> World:
         path = Path(path)
-        data = yaml.safe_load(path.read_text())
+        if not path.exists():
+            raise FileNotFoundError(f"world file not found: {path}")
+        try:
+            data = yaml.safe_load(path.read_text())
+        except yaml.YAMLError as exc:
+            raise ValueError(f"{path}: invalid YAML: {exc}") from exc
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"{path}: world file must be a YAML mapping, got {type(data).__name__}"
+            )
         world = cls(parse_world(data))
         world.source_path = path
         world._seed()

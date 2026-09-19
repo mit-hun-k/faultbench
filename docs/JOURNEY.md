@@ -52,12 +52,14 @@ Each piece: what it is, why we need it, and whether it's done.
 **Why:** "Works with any framework" is a claim until something other than Pydantic AI talks to the world. Then it's a fact for the README.
 **Built:** 19 Sep. `worldbench serve --http` puts the world on a URL, and the reference MCP client connects to it, calls the tools, and changes the world — no Pydantic AI involved. Any MCP-speaking framework connects the same way. (A heavier example with a second full agent framework can come later.)
 
-### 9. Polish and docs 🔨 now
-**What:** Clear error messages, YAML validation that points at the line, a second example world, user docs.
+### 9. Polish and docs ✅
+**What:** Clear error messages on bad world files, a second example world, and user docs.
 **Why:** You've been the only user. This is where the tool stops assuming the reader is you.
-**Done when:** A friend writes a world file from the docs alone.
+**Built:** 19 Sep. Two guides — "write a world" and "test an agent" — plus a second, different
+world (a tiny bank) that a reader can copy from. Bad world files now fail with a message that
+names the problem instead of a stack trace.
 
-### 10. Release 0.1.0 ⬜
+### 10. Release 0.1.0 🔨 now
 **What:** README that opens with the 20-run demo, a one-minute recording, CI, and the package on PyPI.
 **Why:** `pip install worldbench` working on a stranger's machine is the difference between a repo and a project.
 

@@ -1,0 +1,39 @@
+# A second example world: a tiny bank. Shows the format generalises beyond the shop.
+# Tables are reached by record-type name (world.accounts, world.transfers), unique per world.
+name: bank
+seed: 7
+
+services:
+  accounts:
+    records:
+      accounts:
+        id: str
+        owner: str
+        balance: float
+        status: enum[active, frozen, closed]
+        opened_at: datetime
+    seed:
+      count: 10
+    operations:
+      get_account:   { kind: get,  record: accounts }
+      list_accounts: { kind: list, record: accounts, filter: [status] }
+      transfer:
+        kind: custom
+        handler: bank_rules.transfer
+
+  ledger:
+    records:
+      transfers:
+        id: str
+        from_id: ref[accounts.accounts]
+        to_id: ref[accounts.accounts]
+        amount: float
+        created_at: datetime
+    operations:
+      list_transfers: { kind: list, record: transfers, filter: [from_id] }
+
+faults:
+  default:
+    latency_ms: [20, 100]
+  accounts.transfer:
+    errors: { timeout: 0.10 }   # a timeout after the money moves -> a retry transfers twice
