@@ -93,6 +93,28 @@ def serve_stdio(
     )
 
 
+def serve_http(
+    world_path: str | Path,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    path: str = "/mcp",
+    clock: Any = None,
+    state_file: str | None = None,
+    faults: FaultProfile | None = None,
+    run_index: int = 0,
+) -> None:
+    """Load a world file and serve it over streamable HTTP at http://host:port{path} (blocking).
+
+    The served world runs in its own process, so it does NOT share the in-process `world`
+    object; a client asserts on end state via the state file (see WORLDBENCH_STATE_FILE)."""
+    world = World.load(world_path)
+    if clock is None:
+        clock = FakeClock()
+    build_server(world, clock=clock, state_file=state_file, faults=faults, run_index=run_index).run(
+        "streamable-http", host=host, port=port, streamable_http_path=path
+    )
+
+
 # --- internals ------------------------------------------------------------------
 
 

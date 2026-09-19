@@ -1,5 +1,5 @@
-"""pytest plugin: world/faults/clock/mcp_server/trace fixtures, markers, and N-run pass
-rate. Milestones 5–7.
+"""pytest plugin: world/faults/clock/mcp_server/mcp_url/trace fixtures, markers, and N-run
+pass rate. Milestones 5–8.
 
 Registered via the `pytest11` entry point in pyproject.toml, so it loads automatically once
 worldbench is installed. A test declares what it needs with markers and receives ready-built
@@ -18,12 +18,18 @@ each with a distinct deterministic fault sequence (`run_index` 0..N-1). The plug
 makes the aggregate the CI verdict: individual run failures don't fail the build, only a rate
 below `r` does. Without `min_pass_rate`, every run must pass.
 
-There is no `mcp_url` (HTTP) yet — `mcp_server` is an in-process MCP server sharing the
-`world` object, so a test can assert on world state directly. HTTP is milestone 8.
+Transports: `mcp_server` is an in-process MCP server sharing the `world` object, so a test
+can assert on world state directly. `mcp_url` serves the world over HTTP in a subprocess (any
+MCP client can connect); assert on end state via `mcp_url.snapshot()`.
 """
 
 from __future__ import annotations
 
+import json
+import socket
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -135,6 +141,81 @@ def mcp_server(
     directly. Seed dates are aligned with the clock's default 'now' (milestone 7), so
     delivered orders are eligible for return unless the test moves the clock forward."""
     return build_server(world, clock=clock, faults=faults, run_index=run_index, recorder=_recorder)
+
+
+class _ServerURL(str):
+    """The MCP endpoint URL, with `.snapshot()` reading the out-of-process server's world
+    state (mirrored to a file, since an HTTP server can't share the `world` object)."""
+
+    state_file: Path
+
+    def snapshot(self) -> dict:
+        try:
+            return json.loads(self.state_file.read_text())
+        except (FileNotFoundError, ValueError):
+            return {}
+
+
+def _free_port() -> int:
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def _wait_for_port(host: str, port: int, proc: subprocess.Popen, timeout: float = 15.0) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if proc.poll() is not None:
+            raise RuntimeError(f"worldbench server exited early (code {proc.returncode})")
+        with socket.socket() as s:
+            s.settimeout(0.5)
+            try:
+                s.connect((host, port))
+                return
+            except OSError:
+                time.sleep(0.1)
+    raise TimeoutError(f"worldbench server did not come up on {host}:{port} in {timeout}s")
+
+
+@pytest.fixture
+def mcp_url(request: pytest.FixtureRequest, tmp_path: Path):
+    """A running MCP server over HTTP: spawns `worldbench serve --http` as a subprocess and
+    yields its URL. Use `mcp_url.snapshot()` to read the world's end state. `@pytest.mark.faults`
+    (if present) applies the world file's own faults: block (inline dict faults aren't
+    supported over HTTP)."""
+    world_path = _marker(request, "world")
+    if world_path is None:
+        raise pytest.UsageError("the `mcp_url` fixture needs @pytest.mark.world('path.yaml')")
+    host, port = "127.0.0.1", _free_port()
+    state_file = tmp_path / "state.json"
+    cmd = [
+        sys.executable,
+        "-m",
+        "worldbench.cli",
+        "serve",
+        str(_resolve(request, world_path)),
+        "--http",
+        "--host",
+        host,
+        "--port",
+        str(port),
+        "--state-file",
+        str(state_file),
+    ]
+    if request.node.get_closest_marker("faults") is not None:
+        cmd.append("--faults")
+    proc = subprocess.Popen(cmd)
+    try:
+        _wait_for_port(host, port, proc)
+        url = _ServerURL(f"http://{host}:{port}/mcp")
+        url.state_file = state_file
+        yield url
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
 
 
 # --- N runs + pass rate ---------------------------------------------------------

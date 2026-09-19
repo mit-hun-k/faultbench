@@ -47,11 +47,12 @@ Each piece: what it is, why we need it, and whether it's done.
 **Why:** Real systems have rules and real failures are conditional. Without this the fake world is too simple to catch interesting bugs.
 **Built:** 19 Sep. The fake clock now drives real rules: a delivered order is refundable only within 30 days (move the clock forward and it's refused), a just-placed order isn't visible yet (sync lag), and too many calls in a window get rate-limited — all deterministic and testable without waiting.
 
-### 8. Second framework 🔨 now
-**What:** Serve the world over HTTP, a `worldbench serve` command, and prove an agent from a *different* framework passes the same tests.
-**Why:** "Works with any framework" is a claim until two frameworks share one world. Then it's a fact for the README.
+### 8. Second framework ✅
+**What:** Serve the world over HTTP, a `worldbench serve` command, and prove a *different* MCP client — not the one the agent uses — drives the same world.
+**Why:** "Works with any framework" is a claim until something other than Pydantic AI talks to the world. Then it's a fact for the README.
+**Built:** 19 Sep. `worldbench serve --http` puts the world on a URL, and the reference MCP client connects to it, calls the tools, and changes the world — no Pydantic AI involved. Any MCP-speaking framework connects the same way. (A heavier example with a second full agent framework can come later.)
 
-### 9. Polish and docs ⬜
+### 9. Polish and docs 🔨 now
 **What:** Clear error messages, YAML validation that points at the line, a second example world, user docs.
 **Why:** You've been the only user. This is where the tool stops assuming the reader is you.
 **Done when:** A friend writes a world file from the docs alone.
