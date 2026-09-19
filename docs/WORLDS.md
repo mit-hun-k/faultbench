@@ -49,6 +49,20 @@ A field named `id` is auto-assigned sequential ids (`"1"`, `"2"`, …); don't ge
 > commas/brackets break YAML *flow* style (`{ status: enum[a, b, c] }` is a parse error). The
 > examples use block style; follow them.
 
+## Seeding and generated data
+
+`seed:` under a service sets how many rows to generate. `count: N` generates **N rows for
+each record type in that service** (a service with two record types gets N of each). Omit
+`seed:` for an empty table (e.g. a ledger the agent fills). The top-level `seed:` integer is
+the RNG seed — same file + same seed ⇒ byte-identical data.
+
+Generated values are **type-correct but not domain-aware**: strings are random words, ints/
+floats span a wide range, enums pick a member, and `datetime`s fall in a recent window but are
+independent (there's no way to make `check_out` land after `check_in`, or bound `nights`).
+That's fine for smoke tests and fault scenarios; if you need realistic or related values,
+set them in a custom handler or in your test (`world.<record>.update(id, ...)`) before the run.
+Per-field generation controls and seeding from CSV/JSON are not in 0.1.
+
 ## Operations
 
 Every operation becomes one MCP tool named after the operation. Built-in kinds:

@@ -63,6 +63,39 @@ tests/test_refund.py::test_refund_exactly_once: 17/20 passed (85%)  min_pass_rat
     run4: get_order → create_return → issue_refund!timeout → issue_refund
 ```
 
+## Keyless: drive the tools yourself (no model)
+
+You don't need an agent or an API key to test a world. `mcp_server` is a live in-process MCP
+server sharing the `world` object — call its operations directly and assert on state. This is
+how you unit-test operations, custom rules, and faults, deterministically and for free:
+
+```python
+@pytest.mark.world("worlds/shop.yaml")
+async def test_return_rule(world, mcp_server):
+    order = world.orders.pick(status="delivered")
+    await mcp_server.call_tool("create_return", {"order_id": order.id})
+    assert world.orders.get(order.id).status == "returned"
+```
+
+A rejected call (a business rule or an injected fault) raises; the `trace` fixture records it
+either way, so you can assert the fault fired:
+
+```python
+@pytest.mark.world("worlds/shop.yaml")
+@pytest.mark.faults({"payments.issue_refund": {"errors": {"timeout": 1.0}}})
+async def test_timeout_still_wrote_the_refund(world, mcp_server, trace):
+    order = world.orders.pick(status="delivered")
+    with pytest.raises(Exception, match="timeout"):
+        await mcp_server.call_tool("issue_refund", {"order_id": order.id, "amount": order.total})
+    assert [e["fault"] for e in trace.faults()] == ["timeout"]
+    assert len(world.refunds.where(order_id=order.id)) == 1   # the write happened, then it "timed out"
+```
+
+`trace` gives `count(tool)`, `calls_to(tool)`, `faults()`, `failures()`; the `faults` fixture
+is a `FaultProfile` with `resolve(service, op) -> FaultRule` (`.latency_ms`, `.errors`,
+`.rate_limit`, `.conditional`). (These calls are async, so you need `pytest-asyncio` — see
+Notes.)
+
 ## Over HTTP (any framework)
 
 For an agent that connects to a URL, use `mcp_url` and assert via its snapshot:
