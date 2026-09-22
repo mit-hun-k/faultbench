@@ -2,6 +2,8 @@
 
 **Fake, stateful worlds with fault injection for testing tool-using AI agents.**
 
+![faultbench injecting a refund timeout and catching the resulting double refund](docs/demo.gif)
+
 Declare your services in a YAML file. faultbench serves them as MCP tools your agent can call,
 makes them slow or broken on purpose, records every call, and lets you assert on the world's
 end state from pytest, twenty runs at a time.
