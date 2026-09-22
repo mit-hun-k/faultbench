@@ -53,9 +53,11 @@ def report(state_file: Path) -> None:
     orders = list(snapshot.get("orders", {}).values())
     refunds = list(snapshot.get("refunds", {}).values())
 
-    print("\n=== final orders ===")
+    counts: dict[str, int] = {}
     for order in orders:
-        print(f"  order {order['id']}: {order['status']:<9} ${order['total']:.2f}")
+        counts[order["status"]] = counts.get(order["status"], 0) + 1
+    tally = "  ".join(f"{n} {status}" for status, n in sorted(counts.items()))
+    print(f"\n=== orders ({len(orders)}) ===\n  {tally}")
 
     print("\n=== refunds issued ===")
     if not refunds:
