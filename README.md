@@ -1,5 +1,7 @@
 # faultbench
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/mit-hun-k/faultbench)](https://m8ven.ai/mcp/mit-hun-k/faultbench)
+
 **Fake, stateful worlds with fault injection for testing tool-using AI agents.**
 
 ![faultbench injecting a refund timeout and catching the resulting double refund](docs/demo.gif)
